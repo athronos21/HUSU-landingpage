@@ -1,0 +1,276 @@
+/* ── Note banner ── */
+.affairs-note-section {
+  background: linear-gradient(170deg, #0a1628 0%, #0f2040 100%);
+  padding: 32px 0 0;
+}
+
+.affairs-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(232,160,32,0.08);
+  border: 1px solid rgba(232,160,32,0.25);
+  border-radius: var(--radius);
+  padding: 20px 28px;
+}
+
+.affairs-note-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+
+.affairs-note p {
+  font-size: 0.92rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.7;
+}
+
+/* ── Affairs list section ── */
+.affairs-list-section {
+  background: linear-gradient(170deg, #0f2040 0%, #0a1628 100%);
+  padding-top: 56px;
+}
+
+/* ── Each affair block ── */
+.affair-block {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 56px;
+  align-items: center;
+  padding-bottom: 72px;
+  margin-bottom: 72px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.affair-block:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.affair-block.reverse { grid-template-columns: 2fr 1fr; }
+.affair-block.reverse .affair-visual { order: 2; }
+.affair-block.reverse .affair-content { order: 1; }
+
+/* Visual panel */
+.affair-visual {
+  background: linear-gradient(135deg, var(--ac, #1a3a6b) 0%, color-mix(in srgb, var(--ac, #1a3a6b) 60%, #000) 100%);
+  border-radius: 20px;
+  padding: 64px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  min-height: 280px;
+  justify-content: center;
+}
+
+.affair-visual::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.2);
+  border-radius: 20px;
+}
+
+.av-icon {
+  font-size: 5.5rem;
+  line-height: 1;
+  position: relative; z-index: 1;
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5));
+}
+
+.av-badge {
+  position: relative; z-index: 1;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.av-number {
+  position: absolute;
+  bottom: 16px; right: 20px;
+  font-size: 5rem;
+  font-weight: 900;
+  color: rgba(255,255,255,0.06);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Content panel */
+.affair-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid;
+  margin-bottom: 14px;
+}
+.affair-tag::before { content: '●'; font-size: 0.5rem; }
+
+.affair-content h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.9rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.affair-accent {
+  width: 48px; height: 3px;
+  border-radius: 2px;
+  margin: 12px 0 20px;
+}
+
+.affair-desc {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.85;
+  margin-bottom: 32px;
+}
+
+/* Leadership inside affair */
+.affair-leadership h4 {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 14px;
+}
+
+.affair-leaders-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.affair-leader-pill {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid var(--lc);
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+.affair-leader-pill:hover { background: rgba(255,255,255,0.09); }
+
+.alp-avatar {
+  width: 40px; height: 40px; min-width: 40px;
+  border-radius: 50%;
+  background: var(--lc);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 800;
+  color: var(--white);
+  opacity: 0.9;
+}
+
+.affair-leader-pill span {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 2px;
+}
+
+.affair-leader-pill strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .affair-block,
+  .affair-block.reverse {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .affair-block.reverse .affair-visual,
+  .affair-block.reverse .affair-content { order: unset; }
+  .av-icon { font-size: 3rem; }
+  .affair-visual { padding: 36px 24px; }
+}
+
+/* ── Affairs page hero override ── */
+.affairs-page .page-hero.affairs-hero {
+  background: #060d1a;
+  padding: 180px 0 120px;
+  position: relative;
+  overflow: hidden;
+  min-height: 62vh;
+  display: flex;
+  align-items: center;
+}
+
+/* animated mesh shapes */
+.affairs-hero-shapes { position: absolute; inset: 0; pointer-events: none; }
+
+.ahs {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+  animation: ahsDrift 10s ease-in-out infinite;
+}
+.ahs-1 {
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, #1a3a6b, transparent 70%);
+  top: -180px; right: -100px;
+  animation-delay: 0s;
+}
+.ahs-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #e8a020, transparent 70%);
+  bottom: -120px; left: -80px;
+  animation-delay: 4s;
+  opacity: 0.14;
+}
+.ahs-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, #2a5298, transparent 70%);
+  top: 30%; left: 35%;
+  animation-delay: 7s;
+  opacity: 0.18;
+}
+
+@keyframes ahsDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(24px, -20px) scale(1.04); }
+  66%  { transform: translate(-16px, 16px) scale(0.97); }
+}
+
+.affairs-page .page-hero.affairs-hero .container {
+  position: relative; z-index: 1; width: 100%;
+}
+
+.affairs-page .page-hero.affairs-hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-weight: 800;
+  margin-bottom: 20px;
+  line-height: 1.1;
+}
+
+.affairs-page .page-hero.affairs-hero p {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.68);
+  max-width: 600px;
+  line-height: 1.85;
+}
