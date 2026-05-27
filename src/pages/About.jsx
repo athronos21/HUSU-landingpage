@@ -1,3 +1,4 @@
+import { management } from '../data/data'
 import './About.css'
 
 const mvItems = [
@@ -12,7 +13,7 @@ const mvItems = [
     icon: '🌟',
     label: 'Vision',
     title: 'Our Vision',
-    text: 'To be a leading students\' union in Ethiopia that empowers students to reach their full potential, contributes to national development, and upholds the values of integrity, unity, and excellence.',
+    text: "To be a leading students' union in Ethiopia that empowers students to reach their full potential, contributes to national development, and upholds the values of integrity, unity, and excellence.",
     color: '#e8a020',
   },
   {
@@ -24,7 +25,14 @@ const mvItems = [
   },
 ]
 
+function initials(name) {
+  return name.split(' ').map(n => n[0]).join('')
+}
+
 export default function About() {
+  const president = management[0]
+  const others    = management.slice(1)
+
   return (
     <div className="about-page">
 
@@ -71,25 +79,51 @@ export default function About() {
       {/* ── Leadership ── */}
       <section className="section leadership-about" id="leadership">
         <div className="container">
+
           <div className="la-header">
-            <div>
-              <p className="section-subtitle">Higher Management</p>
-              <h2 className="section-title">Union Leadership</h2>
-              <div className="accent-bar" />
+            <p className="section-subtitle">Higher Management</p>
+            <h2 className="section-title">Union Leadership</h2>
+            <div className="accent-bar" />
+          </div>
+
+          {/* President spotlight */}
+          <div className="la-president">
+            <div className="la-president-avatar">
+              {president.image
+                ? <img src={president.image} alt={president.name} />
+                : <span>{initials(president.name)}</span>
+              }
+              <div className="la-avatar-ring" />
+            </div>
+            <div className="la-president-info">
+              <span className="la-president-badge">★ President</span>
+              <h2>{president.name}</h2>
+              <div className="la-divider" />
+              <p>{president.bio}</p>
+              <blockquote>"Leading with integrity, serving with purpose."</blockquote>
             </div>
           </div>
 
-          <div className="leadership-about-content">
-            <p>
-              The Haramaya University Students' Union is led by a dedicated team of elected officials who represent the collective voice of all students. Our leadership structure ensures accountability, transparency, and effective representation at every level of university governance.
-            </p>
-            <p>
-              Each leader is democratically elected by the student body and serves with a commitment to uphold the union's mission — advocating for student rights, improving campus life, and fostering academic excellence.
-            </p>
-            <p>
-              The leadership team works closely with university administration, faculty, and student organizations to address concerns, implement improvements, and create opportunities that benefit every student at Haramaya University.
-            </p>
+          {/* Other members */}
+          <div className="la-members">
+            {others.map((m, i) => (
+              <div key={m.id} className="la-member-card">
+                <div className="la-member-avatar">
+                  {m.image
+                    ? <img src={m.image} alt={m.name} />
+                    : <span>{initials(m.name)}</span>
+                  }
+                </div>
+                <div className="la-member-info">
+                  <span className="la-member-role">{m.title}</span>
+                  <h4>{m.name}</h4>
+                  <p>{m.bio}</p>
+                </div>
+                <div className="la-member-index">0{i + 2}</div>
+              </div>
+            ))}
           </div>
+
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import { management, affairs } from '../data/data'
-import { contact } from '../data/data'
+import { management, affairs, contact } from '../data/data'
+import { FacebookIcon, TikTokIcon, XIcon, LinkedInIcon } from '../components/SocialIcons'
 import './Home.css'
 
 const stats = [
@@ -238,14 +238,10 @@ export default function Home() {
             <p className="cta-socials-label">Follow us on</p>
             <div className="cta-socials-row">
               {[
-                { label: 'Facebook', url: contact.facebook, color: '#1877F2',
-                  icon: <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg> },
-                { label: 'TikTok', url: contact.tiktok, color: '#69C9D0',
-                  icon: <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg> },
-                { label: 'X (Twitter)', url: contact.x, color: '#e2e8f0',
-                  icon: <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg> },
-                { label: 'LinkedIn', url: contact.linkedin, color: '#0A66C2',
-                  icon: <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg> },
+                { label: 'Facebook', url: contact.facebook, color: '#1877F2', icon: <FacebookIcon /> },
+                { label: 'TikTok',   url: contact.tiktok,   color: '#69C9D0', icon: <TikTokIcon /> },
+                { label: 'X (Twitter)', url: contact.x,     color: '#e2e8f0', icon: <XIcon /> },
+                { label: 'LinkedIn', url: contact.linkedin,  color: '#0A66C2', icon: <LinkedInIcon /> },
               ].map(s => (
                 <a key={s.label} href={s.url} target="_blank" rel="noreferrer"
                   className="cta-social-pill" style={{ '--sc': s.color }}
