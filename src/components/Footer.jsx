@@ -1,19 +1,20 @@
 import { Link } from 'react-router-dom'
 import { contact } from '../data/data'
-import { FacebookIcon, TikTokIcon, XIcon, LinkedInIcon } from './SocialIcons'
+import { FacebookIcon, TikTokIcon, XIcon, LinkedInIcon, TelegramIcon } from './SocialIcons'
 import './Footer.css'
 
 const quickLinks = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About Us' },
+  { to: '/',        label: 'Home' },
+  { to: '/about',   label: 'About Us' },
   { to: '/affairs', label: 'Affairs' },
-  { to: '/news', label: 'News & Announcements' },
-  { to: '/events', label: 'Events' },
+  { to: '/news',    label: 'News & Announcements' },
+  { to: '/events',  label: 'Events' },
   { to: '/contact', label: 'Contact' },
 ]
 
 const socials = [
   { label: 'Facebook', url: contact.facebook, color: '#1877F2', icon: <FacebookIcon size={16} /> },
+  { label: 'Telegram', url: contact.telegram,  color: '#229ED9', icon: <TelegramIcon size={16} /> },
   { label: 'TikTok',   url: contact.tiktok,   color: '#69C9D0', icon: <TikTokIcon size={16} /> },
   { label: 'X',        url: contact.x,         color: '#e2e8f0', icon: <XIcon size={16} /> },
   { label: 'LinkedIn', url: contact.linkedin,  color: '#0A66C2', icon: <LinkedInIcon size={16} /> },
@@ -28,7 +29,7 @@ export default function Footer() {
         <div className="container flh-inner">
           <div className="flh-logo-wrap">
             <img src="/university-logo.png" alt="Haramaya University"
-              onError={e => e.target.style.display='none'} />
+              onError={e => e.target.style.display = 'none'} />
           </div>
           <div className="flh-center">
             <div className="flh-accent-line" />
@@ -38,7 +39,7 @@ export default function Footer() {
           </div>
           <div className="flh-logo-wrap">
             <img src="/union-logo.png" alt="Students Union"
-              onError={e => e.target.style.display='none'} />
+              onError={e => e.target.style.display = 'none'} />
           </div>
         </div>
       </div>
@@ -109,10 +110,12 @@ export default function Footer() {
                 <a href="https://www.haramaya.edu.et" target="_blank" rel="noreferrer">www.haramaya.edu.et</a>
               </li>
               <li>
-                <span className="fcl-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span className="fcl-icon" style={{ color: '#229ED9' }}>
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.5l-2.95-.924c-.64-.203-.658-.64.136-.954l11.57-4.461c.537-.194 1.006.131.968.06z"/>
+                  </svg>
                 </span>
-                <span>Fax: 025-5-53-00-35</span>
+                <a href={contact.telegram} target="_blank" rel="noreferrer" style={{ color: '#229ED9' }}>Join our Telegram</a>
               </li>
             </ul>
           </div>

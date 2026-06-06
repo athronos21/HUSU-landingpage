@@ -245,6 +245,12 @@
 .header-toggle span.open:nth-child(2) { opacity: 0; transform: scaleX(0); }
 .header-toggle span.open:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+/* ── Active nav indicator ── */
+.hn-link.active {
+  color: var(--accent-light);
+  background: rgba(232,160,32,0.06);
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .hb-title { font-size: 0.75rem; }

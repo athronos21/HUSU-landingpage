@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import BackToTop from './components/BackToTop'
+import AnnouncementBanner from './components/AnnouncementBanner'
 
 const Home    = lazy(() => import('./pages/Home'))
 const About   = lazy(() => import('./pages/About'))
@@ -18,6 +20,12 @@ const pageTitles = {
   '/news':    'News & Announcements',
   '/events':  'Events & Activities',
   '/contact': 'Contact Us',
+}
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
 }
 
 function PageTitle() {
@@ -55,7 +63,9 @@ function PageLoader() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <PageTitle />
+      <AnnouncementBanner />
       <Navbar />
       <main>
         <Suspense fallback={<PageLoader />}>
@@ -71,6 +81,7 @@ export default function App() {
         </Suspense>
       </main>
       <Footer />
+      <BackToTop />
     </BrowserRouter>
   )
 }

@@ -134,6 +134,30 @@ export const news = [
     summary:
       "Union leadership held a productive meeting with the University President to address key student concerns including internet access, library hours, and dormitory conditions.",
   },
+  {
+    id: 6,
+    title: "New Student Welfare Fund Established",
+    date: "2025-03-10",
+    category: "Service",
+    summary:
+      "HUSU has successfully lobbied for the creation of an emergency welfare fund for students in financial need, providing support for food, medical emergencies, and academic materials.",
+  },
+  {
+    id: 7,
+    title: "Research Competition Announced for All Colleges",
+    date: "2025-04-01",
+    category: "Academic",
+    summary:
+      "The Academic Affair is organizing a university-wide student research competition to recognize and reward innovative thinking and scholarly work across all disciplines.",
+  },
+  {
+    id: 8,
+    title: "Campus Safety Initiative Launched",
+    date: "2025-04-18",
+    category: "Discipline",
+    summary:
+      "A new campus safety awareness initiative has been launched in partnership with the university security office, focusing on safe campus navigation and emergency protocols.",
+  },
 ];
 
 export const events = [
@@ -177,6 +201,26 @@ export const events = [
     description:
       "Celebrating the rich cultural diversity of Haramaya University's student body. Featuring traditional music, dance, food, and art from different regions of Ethiopia.",
   },
+  {
+    id: 5,
+    title: "Inter-College Debate Competition",
+    date: "2025-05-22",
+    time: "9:00 AM – 4:00 PM",
+    location: "Main Auditorium, Haramaya University",
+    category: "Academic",
+    description:
+      "Teams from each college compete in a structured debate tournament on topics ranging from national policy to campus life. Open for registration now.",
+  },
+  {
+    id: 6,
+    title: "Community Outreach & Volunteering Day",
+    date: "2025-06-07",
+    time: "7:00 AM – 2:00 PM",
+    location: "Haramaya Town & Surroundings",
+    category: "Culture",
+    description:
+      "HUSU organizes a community service day where students volunteer in local schools, clean-up drives, and health awareness campaigns in the surrounding community.",
+  },
 ];
 
 export const contact = {
@@ -186,5 +230,6 @@ export const contact = {
   tiktok: "https://tiktok.com/@haramayausu",
   x: "https://x.com/HaramayaUSU",
   linkedin: "https://linkedin.com/company/haramaya-usu",
+  telegram: "https://t.me/HUSUOfficial",
   address: "Haramaya University, Haramaya, Ethiopia",
 };

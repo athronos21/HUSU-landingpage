@@ -22,10 +22,117 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 44px;
+  margin-bottom: 32px;
   flex-wrap: wrap;
   gap: 16px;
 }
+
+/* ── Controls (search + filter) ── */
+.news-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.news-search-wrap {
+  position: relative;
+  max-width: 420px;
+  width: 100%;
+}
+
+.ns-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+.news-search {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 11px 40px 11px 40px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.news-search::placeholder { color: rgba(255,255,255,0.28); }
+.news-search:focus {
+  border-color: rgba(232,160,32,0.5);
+  background: rgba(255,255,255,0.09);
+}
+
+.ns-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  transition: background 0.2s, color 0.2s;
+}
+.ns-clear:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+.news-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.news-filter-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  color: rgba(255,255,255,0.6);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.news-filter-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--white);
+}
+.news-filter-btn.active {
+  background: var(--accent-light);
+  border-color: var(--accent-light);
+  color: var(--primary-dark);
+}
+
+.news-results-count {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 20px;
+}
+.news-results-count strong { color: rgba(255,255,255,0.6); }
+
+/* ── Empty state ── */
+.news-empty {
+  text-align: center;
+  padding: 64px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.news-empty span { font-size: 2.5rem; }
+.news-empty p { color: rgba(255,255,255,0.45); font-size: 0.95rem; }
 
 /* ── Telegram follow button ── */
 .tg-follow-btn {
@@ -40,6 +147,9 @@
   font-size: 0.88rem;
   transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
   white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 .tg-follow-btn:hover {
   background: #1a8bbf;
@@ -51,24 +161,29 @@
 .news-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 56px;
+  gap: 14px;
+  margin-bottom: 48px;
 }
 
 .news-card {
   display: grid;
   grid-template-columns: 56px 1fr 4px;
-  gap: 0;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--radius);
   overflow: hidden;
   transition: background 0.25s, border-color 0.25s, transform 0.25s;
+  animation: fadeSlideIn 0.35s ease both;
 }
 .news-card:hover {
   background: rgba(255,255,255,0.08);
   border-color: rgba(232,160,32,0.25);
   transform: translateX(4px);
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .nc-index {
@@ -144,13 +259,10 @@
   border-radius: var(--radius);
   padding: 28px 32px;
   flex-wrap: wrap;
+  margin-top: 8px;
 }
 
-.news-tg-cta svg {
-  color: #229ED9;
-  flex-shrink: 0;
-}
-
+.news-tg-cta svg { color: #229ED9; flex-shrink: 0; }
 .news-tg-cta div { flex: 1; min-width: 200px; }
 
 .news-tg-cta h4 {
@@ -171,4 +283,5 @@
   .nc-body { padding: 18px 16px; }
   .nc-index { font-size: 0.85rem; }
   .news-tg-cta { padding: 20px; }
+  .news-search-wrap { max-width: 100%; }
 }

@@ -1,0 +1,68 @@
+.ann-banner {
+  background: linear-gradient(90deg, #1a3a6b, #2a5298 50%, #1a3a6b);
+  border-bottom: 1px solid rgba(232, 160, 32, 0.3);
+  padding: 9px 52px 9px 0;
+  position: relative;
+  z-index: 1100;
+}
+
+.ann-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ann-badge {
+  background: var(--accent-light);
+  color: var(--primary-dark);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ann-inner p {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.5;
+}
+
+.ann-link {
+  color: var(--accent-light);
+  font-weight: 700;
+  margin-left: 6px;
+  transition: color 0.2s;
+}
+.ann-link:hover { color: var(--accent-bright); }
+
+.ann-close {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background 0.2s, color 0.2s;
+}
+.ann-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .ann-inner { gap: 6px; }
+  .ann-inner p { font-size: 0.75rem; }
+}
