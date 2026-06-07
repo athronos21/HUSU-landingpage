@@ -39,7 +39,7 @@ function useFirestoreOrStatic(collectionName, staticData, orderField = 'date') {
 
 export function useNews()    { return useFirestoreOrStatic('news',    staticNews,       'date') }
 export function useEvents()  { return useFirestoreOrStatic('events',  staticEvents,     'date') }
-export function useAffairs() { return useFirestoreOrStatic('affairs', staticAffairs,    'createdAt') }
+export function useAffairs() { return useFirestoreOrStatic('affairs', staticAffairs, 'createdAt') }
 export function useTeam()    { return useFirestoreOrStatic('team',    staticManagement, 'createdAt') }
 
 /* ── Contact info ── */
