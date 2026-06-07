@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { management, affairs, events, news, contact } from '../data/data'
+import { management, affairs } from '../data/data'
 import { FacebookIcon, TikTokIcon, XIcon, LinkedInIcon, TelegramIcon } from '../components/SocialIcons'
+import { useNews, useEvents, useContact, useSiteSettings } from '../hooks/usePublicData'
 import './Home.css'
 
 /* ── Animated counter hook ── */
@@ -9,11 +10,9 @@ function useCounter(target, duration = 1800, shouldStart = false) {
   const [count, setCount] = useState(0)
   useEffect(() => {
     if (!shouldStart) return
-    // Don't animate values that are years or non-numeric
     const raw = target.replace(/[,+K]/g, '')
     const isNumber = !isNaN(raw) && raw !== ''
     const numericVal = parseInt(raw)
-    // Skip animation for years (4-digit numbers starting with 20xx / 19xx)
     const isYear = isNumber && numericVal >= 1900 && numericVal <= 2100
     if (!isNumber || isYear) { setCount(target); return }
     const end = numericVal * (target.includes('K') ? 1000 : 1)
@@ -60,12 +59,17 @@ function StatItem({ value, label, icon, isLast }) {
   )
 }
 
-const stats = [
-  { value: '3',     label: 'Main Affairs',       icon: '🏛️' },
-  { value: '5',     label: 'Leadership Members',  icon: '👥' },
-  { value: '1,000', label: 'Students Served',     icon: '🎓' },
-  { value: '2024',  label: 'Established',         icon: '📅' },
-]
+const categoryColors = {
+  Announcement: '#4a7fd4', Academic: '#10b981',
+  Service: '#e8a020', Discipline: '#a78bfa',
+}
+const eventCatColors = {
+  Sports: '#10b981', Academic: '#4a7fd4', Workshop: '#a78bfa', Culture: '#e8a020',
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
 const values = [
   { icon: '🎯', title: 'Mission-Driven', desc: 'Every action guided by student welfare and academic excellence.' },
@@ -74,25 +78,17 @@ const values = [
   { icon: '🏆', title: 'Excellence',     desc: 'Upholding the highest standards in all we do.' },
 ]
 
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-const categoryColors = {
-  Announcement: '#4a7fd4',
-  Academic:     '#10b981',
-  Service:      '#e8a020',
-  Discipline:   '#a78bfa',
-}
-
-const eventCatColors = {
-  Sports:   '#10b981',
-  Academic: '#4a7fd4',
-  Workshop: '#a78bfa',
-  Culture:  '#e8a020',
-}
-
 export default function Home() {
+  const site    = useSiteSettings()
+  const contact = useContact()
+  const { data: newsData }   = useNews()
+  const { data: eventsData } = useEvents()
+
+  const hero   = site.hero
+  const stats  = site.stats
+  const about  = site.about
+  const footer = site.footer
+
   return (
     <div className="home">
 
@@ -106,29 +102,26 @@ export default function Home() {
           <div className="hero-left">
             <div className="hero-eyebrow">
               <span className="eyebrow-dot" />
-              Official Students' Representative Body
+              {hero.eyebrow}
             </div>
 
             <h1 className="hero-heading">
-              Haramaya University<br />
-              <em>Students' Union</em>
+              {hero.heading1}<br />
+              <em>{hero.heading2}</em>
             </h1>
 
-            <p className="hero-desc">
-              Empowering students, championing academic excellence, and building a united campus community at Haramaya University.
-            </p>
+            <p className="hero-desc">{hero.description}</p>
 
             <div className="hero-actions">
-              <Link to="/about" className="btn btn-primary">
-                About the Union
+              <Link to={hero.btn1Link} className="btn btn-primary">
+                {hero.btn1Text}
                 <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd"/>
                 </svg>
               </Link>
-              <Link to="/contact" className="btn btn-glass">Get in Touch</Link>
+              <Link to={hero.btn2Link} className="btn btn-glass">{hero.btn2Text}</Link>
             </div>
 
-            {/* Quick social links */}
             <div className="hero-socials">
               {[
                 { label: 'Facebook', url: contact.facebook, color: '#1877F2', icon: <FacebookIcon size={16} /> },
@@ -163,9 +156,9 @@ export default function Home() {
                   <p>Haramaya University<br />Students' Union</p>
                   <div className="hcs-divider" />
                   <div className="hcs-stats">
-                    <div><strong>3</strong><span>Affairs</span></div>
-                    <div><strong>5</strong><span>Leaders</span></div>
-                    <div><strong>1K+</strong><span>Students</span></div>
+                    {stats.slice(0,3).map((s, i) => (
+                      <div key={i}><strong>{s.value}</strong><span>{s.label}</span></div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -183,7 +176,7 @@ export default function Home() {
       <section className="stats-band">
         <div className="container stats-row">
           {stats.map((s, i) => (
-            <StatItem key={s.label} {...s} isLast={i === stats.length - 1} />
+            <StatItem key={i} {...s} isLast={i === stats.length - 1} />
           ))}
         </div>
       </section>
@@ -192,17 +185,13 @@ export default function Home() {
       <section className="section about-section">
         <div className="container about-grid">
           <div className="about-text">
-            <p className="section-subtitle">Who we are</p>
-            <h2 className="section-title">Your Voice on Campus</h2>
+            <p className="section-subtitle">{about.subtitle}</p>
+            <h2 className="section-title">{about.title}</h2>
             <div className="accent-bar" />
-            <p className="about-body">
-              The Haramaya University Students' Union is the official representative body of all students. We advocate for your rights, improve campus life, and bridge the gap between students and university administration.
-            </p>
-            <p className="about-body" style={{ marginTop: 14 }}>
-              Through our three main affairs — Academic, Discipline, and Service — we ensure every student's needs are heard and addressed.
-            </p>
-            <Link to="/about" className="btn btn-primary" style={{ marginTop: 32, display: 'inline-flex' }}>
-              Learn More About Us
+            <p className="about-body">{about.body1}</p>
+            <p className="about-body" style={{ marginTop: 14 }}>{about.body2}</p>
+            <Link to={about.btnLink} className="btn btn-primary" style={{ marginTop: 32, display: 'inline-flex' }}>
+              {about.btnText}
             </Link>
           </div>
 
@@ -229,7 +218,6 @@ export default function Home() {
             </div>
             <Link to="/affairs" className="btn btn-primary">View All →</Link>
           </div>
-
           <div className="affairs-row">
             {affairs.map((a, i) => (
               <div key={a.id} className="affair-card" style={{ '--ac': a.color }}>
@@ -259,9 +247,7 @@ export default function Home() {
               <p className="section-subtitle">Who leads us</p>
               <h2 className="section-title">Union Leadership</h2>
               <div className="accent-bar" />
-              <p className="leadership-intro">
-                Meet the dedicated team representing the voice of every student at Haramaya University.
-              </p>
+              <p className="leadership-intro">Meet the dedicated team representing the voice of every student.</p>
             </div>
             <Link to="/about" className="btn btn-primary">View Full Team →</Link>
           </div>
@@ -290,8 +276,7 @@ export default function Home() {
               <div key={m.id} className="member-card">
                 <div className="mc-top">
                   <div className="mc-avatar">
-                    {m.image
-                      ? <img src={m.image} alt={m.name} />
+                    {m.image ? <img src={m.image} alt={m.name} />
                       : <span>{m.name.split(' ').map(n => n[0]).join('')}</span>
                     }
                   </div>
@@ -320,19 +305,16 @@ export default function Home() {
             <Link to="/news" className="btn btn-primary">All News →</Link>
           </div>
           <div className="news-preview-grid">
-            {news.slice(0, 3).map(item => (
+            {newsData.slice(0, 3).map(item => (
               <article key={item.id} className="np-card">
                 <div className="np-top">
-                  <span
-                    className="np-category"
-                    style={{ color: categoryColors[item.category] || '#4a7fd4' }}
-                  >
+                  <span className="np-category" style={{ color: categoryColors[item.category] || '#4a7fd4' }}>
                     {item.category}
                   </span>
                   <span className="np-date">{formatDate(item.date)}</span>
                 </div>
                 <h3>{item.title}</h3>
-                <p>{item.summary.slice(0, 100)}…</p>
+                <p>{(item.summary || '').slice(0, 100)}…</p>
                 <div className="np-footer">
                   <Link to="/news" className="np-read-more">
                     Read more
@@ -359,7 +341,7 @@ export default function Home() {
             <Link to="/events" className="btn btn-primary">All Events →</Link>
           </div>
           <div className="events-preview-list">
-            {events.slice(0, 3).map(ev => {
+            {eventsData.slice(0, 3).map(ev => {
               const d = new Date(ev.date)
               return (
                 <div key={ev.id} className="ep-item">
@@ -395,18 +377,15 @@ export default function Home() {
       <section className="cta-banner">
         <div className="cta-banner-bg" />
         <div className="container cta-banner-inner">
-
           <div className="cta-banner-text">
             <h2>Stay Connected with<br /><span>Your Union</span></h2>
-            <p>Get the latest news, upcoming events, and announcements directly from HUSU. We're always here for you.</p>
+            <p>Get the latest news, upcoming events, and announcements directly from HUSU.</p>
             <div className="cta-banner-btns">
               <Link to="/news" className="btn btn-primary">Latest News</Link>
               <Link to="/events" className="btn btn-glass">Upcoming Events</Link>
             </div>
           </div>
-
           <div className="cta-banner-divider" />
-
           <div className="cta-banner-socials">
             <p className="cta-socials-label">Follow us on</p>
             <div className="cta-socials-row">
@@ -418,15 +397,13 @@ export default function Home() {
                 { label: 'LinkedIn', url: contact.linkedin,  color: '#0A66C2', icon: <LinkedInIcon /> },
               ].map(s => (
                 <a key={s.label} href={s.url} target="_blank" rel="noreferrer"
-                  className="cta-social-pill" style={{ '--sc': s.color }}
-                  aria-label={s.label}>
+                  className="cta-social-pill" style={{ '--sc': s.color }} aria-label={s.label}>
                   {s.icon}
                   <span>{s.label}</span>
                 </a>
               ))}
             </div>
           </div>
-
         </div>
       </section>
 

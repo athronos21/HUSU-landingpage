@@ -16,21 +16,27 @@ const Affairs  = lazy(() => import('./pages/Affairs'))
 const Contact  = lazy(() => import('./pages/Contact'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
-// Dashboard
-const Login          = lazy(() => import('./dashboard/Login'))
-const DashboardLayout = lazy(() => import('./dashboard/DashboardLayout'))
-const Overview       = lazy(() => import('./dashboard/Overview'))
-const ManageNews     = lazy(() => import('./dashboard/ManageNews'))
-const ManageEvents   = lazy(() => import('./dashboard/ManageEvents'))
-const ManageAffairs  = lazy(() => import('./dashboard/ManageAffairs'))
-const ManageTeam     = lazy(() => import('./dashboard/ManageTeam'))
-const ManageContact  = lazy(() => import('./dashboard/ManageContact'))
-const ManageUsers    = lazy(() => import('./dashboard/ManageUsers'))
+// Dashboard pages
+const Login              = lazy(() => import('./dashboard/Login'))
+const DashboardLayout    = lazy(() => import('./dashboard/DashboardLayout'))
+const Overview           = lazy(() => import('./dashboard/Overview'))
+const ManageSiteSettings = lazy(() => import('./dashboard/ManageSiteSettings'))
+const ManageNews         = lazy(() => import('./dashboard/ManageNews'))
+const ManageEvents       = lazy(() => import('./dashboard/ManageEvents'))
+const ManageAffairs      = lazy(() => import('./dashboard/ManageAffairs'))
+const ManageTeam         = lazy(() => import('./dashboard/ManageTeam'))
+const ManageContact      = lazy(() => import('./dashboard/ManageContact'))
+const ManageUsers        = lazy(() => import('./dashboard/ManageUsers'))
 
 const pageTitles = {
-  '/': 'Home', '/about': 'About Us', '/affairs': 'Affairs',
-  '/news': 'News & Announcements', '/events': 'Events & Activities', '/contact': 'Contact Us',
-  '/login': 'Login', '/dashboard': 'Dashboard',
+  '/':         'Home',
+  '/about':    'About Us',
+  '/affairs':  'Affairs',
+  '/news':     'News & Announcements',
+  '/events':   'Events & Activities',
+  '/contact':  'Contact Us',
+  '/login':    'Login',
+  '/dashboard':'Dashboard',
 }
 
 function ScrollToTop() {
@@ -57,8 +63,11 @@ function PageLoader() {
       justifyContent: 'center', background: 'linear-gradient(135deg,#060d1a 0%,#0f2040 100%)',
     }}>
       <div style={{
-        width: 40, height: 40, border: '3px solid rgba(232,160,32,0.2)',
-        borderTopColor: '#e8a020', borderRadius: '50%', animation: 'spin 0.8s linear infinite',
+        width: 40, height: 40,
+        border: '3px solid rgba(232,160,32,0.2)',
+        borderTopColor: '#e8a020',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
       }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -85,8 +94,9 @@ export default function App() {
         <PageTitle />
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* ── Public ── */}
-            <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+
+            {/* ── Public pages ── */}
+            <Route path="/"        element={<PublicLayout><Home /></PublicLayout>} />
             <Route path="/about"   element={<PublicLayout><About /></PublicLayout>} />
             <Route path="/news"    element={<PublicLayout><News /></PublicLayout>} />
             <Route path="/events"  element={<PublicLayout><Events /></PublicLayout>} />
@@ -103,6 +113,7 @@ export default function App() {
               </ProtectedRoute>
             }>
               <Route index element={<Overview />} />
+              <Route path="site"    element={<ProtectedRoute allowedRoles={['admin']}><ManageSiteSettings /></ProtectedRoute>} />
               <Route path="news"    element={<ProtectedRoute allowedRoles={['admin','news_org']}><ManageNews /></ProtectedRoute>} />
               <Route path="events"  element={<ProtectedRoute allowedRoles={['admin','events_org']}><ManageEvents /></ProtectedRoute>} />
               <Route path="affairs" element={<ProtectedRoute allowedRoles={['admin','affair_head']}><ManageAffairs /></ProtectedRoute>} />

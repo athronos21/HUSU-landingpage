@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { contact } from '../data/data'
+import { contact as staticContact } from '../data/data'
 import { FacebookIcon, TikTokIcon, XIcon, LinkedInIcon, TelegramIcon } from './SocialIcons'
+import { useContact, useSiteSettings } from '../hooks/usePublicData'
 import './Footer.css'
 
 const quickLinks = [
@@ -12,15 +13,18 @@ const quickLinks = [
   { to: '/contact', label: 'Contact' },
 ]
 
-const socials = [
-  { label: 'Facebook', url: contact.facebook, color: '#1877F2', icon: <FacebookIcon size={16} /> },
-  { label: 'Telegram', url: contact.telegram,  color: '#229ED9', icon: <TelegramIcon size={16} /> },
-  { label: 'TikTok',   url: contact.tiktok,   color: '#69C9D0', icon: <TikTokIcon size={16} /> },
-  { label: 'X',        url: contact.x,         color: '#e2e8f0', icon: <XIcon size={16} /> },
-  { label: 'LinkedIn', url: contact.linkedin,  color: '#0A66C2', icon: <LinkedInIcon size={16} /> },
-]
-
 export default function Footer() {
+  const contact = useContact()
+  const site    = useSiteSettings()
+  const footer  = site.footer
+
+  const socials = [
+    { label: 'Facebook', url: contact.facebook, color: '#1877F2', icon: <FacebookIcon size={16} /> },
+    { label: 'Telegram', url: contact.telegram,  color: '#229ED9', icon: <TelegramIcon size={16} /> },
+    { label: 'TikTok',   url: contact.tiktok,   color: '#69C9D0', icon: <TikTokIcon size={16} /> },
+    { label: 'X',        url: contact.x,         color: '#e2e8f0', icon: <XIcon size={16} /> },
+    { label: 'LinkedIn', url: contact.linkedin,  color: '#0A66C2', icon: <LinkedInIcon size={16} /> },
+  ]
   return (
     <footer className="footer">
 
@@ -51,7 +55,7 @@ export default function Footer() {
           {/* About col */}
           <div className="footer-col footer-about">
             <p className="footer-about-text">
-              The official representative body of all students at Haramaya University — advocating for rights, welfare, and academic excellence since 2024.
+              {footer.tagline}
             </p>
             <div className="footer-socials">
               {socials.map(s => (

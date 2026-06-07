@@ -1,0 +1,67 @@
+.ss-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 16px;
+}
+
+.ss-tab {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.55);
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ss-tab:hover { background: rgba(255,255,255,0.09); color: #fff; }
+.ss-tab.active {
+  background: rgba(232,160,32,0.12);
+  border-color: rgba(232,160,32,0.35);
+  color: #e8a020;
+}
+
+.ss-panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 28px;
+}
+
+.ss-section-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.ss-stat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.ss-stat-row:last-child { border-bottom: none; }
+
+.ss-stat-num {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.2);
+  min-width: 24px;
+  padding-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+  .ss-stat-row { flex-wrap: wrap; }
+  .ss-panel { padding: 16px; }
+}

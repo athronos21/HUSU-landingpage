@@ -6,13 +6,14 @@ import { useAuth } from '../context/AuthContext'
 import './DashboardLayout.css'
 
 const allNavItems = [
-  { to: '/dashboard',          label: 'Overview',   icon: '📊', roles: ['admin','affair_head','news_org','events_org'] },
-  { to: '/dashboard/news',     label: 'News',        icon: '📰', roles: ['admin','news_org'] },
-  { to: '/dashboard/events',   label: 'Events',      icon: '📅', roles: ['admin','events_org'] },
-  { to: '/dashboard/affairs',  label: 'Affairs',     icon: '🏛️', roles: ['admin','affair_head'] },
-  { to: '/dashboard/team',     label: 'Leadership',  icon: '👥', roles: ['admin'] },
-  { to: '/dashboard/contact',  label: 'Contact Info',icon: '📬', roles: ['admin'] },
-  { to: '/dashboard/users',    label: 'Users',       icon: '🔐', roles: ['admin'] },
+  { to: '/dashboard',           label: 'Overview',     icon: '📊', roles: ['admin','affair_head','news_org','events_org'] },
+  { to: '/dashboard/site',      label: 'Site Settings',icon: '🌐', roles: ['admin'] },
+  { to: '/dashboard/news',      label: 'News',         icon: '📰', roles: ['admin','news_org'] },
+  { to: '/dashboard/events',    label: 'Events',       icon: '📅', roles: ['admin','events_org'] },
+  { to: '/dashboard/affairs',   label: 'Affairs',      icon: '🏛️', roles: ['admin','affair_head'] },
+  { to: '/dashboard/team',      label: 'Leadership',   icon: '👥', roles: ['admin'] },
+  { to: '/dashboard/contact',   label: 'Contact Info', icon: '📬', roles: ['admin'] },
+  { to: '/dashboard/users',     label: 'Users',        icon: '🔐', roles: ['admin'] },
 ]
 
 const roleLabel = {
