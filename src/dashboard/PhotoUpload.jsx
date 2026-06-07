@@ -38,18 +38,28 @@ export default function PhotoUpload({
     const ext      = file.name.split('.').pop()
     const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
     const storageRef = ref(storage, fileName)
-    const task = uploadBytesResumable(storageRef, file)
 
-    task.on('state_changed',
-      snap => setProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-      err  => { setError('Upload failed: ' + err.message); setUploading(false) },
-      async () => {
-        const url = await getDownloadURL(task.snapshot.ref)
-        onChange(url)
-        setUploading(false)
-        setProgress(0)
-      }
-    )
+    try {
+      const task = uploadBytesResumable(storageRef, file)
+      task.on('state_changed',
+        snap => setProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
+        err  => {
+          console.error('Upload error:', err)
+          setError(`Upload failed: ${err.code} — ${err.message}`)
+          setUploading(false)
+        },
+        async () => {
+          const url = await getDownloadURL(task.snapshot.ref)
+          onChange(url)
+          setUploading(false)
+          setProgress(0)
+        }
+      )
+    } catch (err) {
+      console.error('Storage error:', err)
+      setError(`Storage error: ${err.message}`)
+      setUploading(false)
+    }
   }
 
   const handleRemove = async () => {
