@@ -1,18 +1,11 @@
 import { useState, useRef } from 'react'
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
-import { storage } from '../firebase'
+import { auth } from '../firebase'
 import './PhotoUpload.css'
 
+const BUCKET = 'husu-f7abc.firebasestorage.app'
+
 /**
- * PhotoUpload — reusable image upload component
- * Props:
- *   value       — current image URL (string or null)
- *   onChange    — called with new URL after upload
- *   folder      — storage folder (e.g. 'team', 'affairs')
- *   label       — optional label text
- *   size        — 'sm' | 'md' | 'lg' (default 'md')
- *   shape       — 'circle' | 'square' (default 'circle')
- *   initials    — fallback text if no image
+ * PhotoUpload — uploads via Firebase Storage REST API (no CORS issues)
  */
 export default function PhotoUpload({
   value, onChange, folder = 'uploads',
@@ -26,52 +19,65 @@ export default function PhotoUpload({
   const sizeMap = { sm: 56, md: 80, lg: 120 }
   const px = sizeMap[size] || 80
 
-  const handleFile = (file) => {
+  const handleFile = async (file) => {
     if (!file) return
     if (!file.type.startsWith('image/')) { setError('Only image files allowed.'); return }
     if (file.size > 5 * 1024 * 1024) { setError('Max file size is 5MB.'); return }
 
     setError('')
     setUploading(true)
-    setProgress(0)
-
-    const ext      = file.name.split('.').pop()
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const storageRef = ref(storage, fileName)
+    setProgress(10)
 
     try {
-      const task = uploadBytesResumable(storageRef, file)
-      task.on('state_changed',
-        snap => setProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100)),
-        err  => {
-          console.error('Upload error:', err)
-          setError(`Upload failed: ${err.code} — ${err.message}`)
-          setUploading(false)
+      // Get auth token
+      const token = await auth.currentUser?.getIdToken()
+      if (!token) throw new Error('Not authenticated')
+
+      // Build upload URL
+      const ext      = file.name.split('.').pop()
+      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const encodedName = encodeURIComponent(fileName)
+      const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o?uploadType=media&name=${encodedName}`
+
+      setProgress(30)
+
+      // Upload via fetch (avoids XMLHttpRequest CORS preflight)
+      const res = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Firebase ${token}`,
+          'Content-Type': file.type,
         },
-        async () => {
-          const url = await getDownloadURL(task.snapshot.ref)
-          onChange(url)
-          setUploading(false)
-          setProgress(0)
-        }
-      )
+        body: file,
+      })
+
+      setProgress(80)
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody.error?.message || `HTTP ${res.status}`)
+      }
+
+      const data = await res.json()
+      setProgress(90)
+
+      // Build download URL
+      const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(fileName)}?alt=media&token=${data.downloadTokens}`
+
+      setProgress(100)
+      onChange(downloadUrl)
+      setError('')
     } catch (err) {
-      console.error('Storage error:', err)
-      setError(`Storage error: ${err.message}`)
+      console.error('Upload error:', err)
+      setError('Upload failed: ' + err.message)
+    } finally {
       setUploading(false)
+      setProgress(0)
     }
   }
 
-  const handleRemove = async () => {
+  const handleRemove = () => {
     if (!confirm('Remove this photo?')) return
-    if (value) {
-      try {
-        const storageRef = ref(storage, value)
-        await deleteObject(storageRef)
-      } catch {
-        // ignore if already deleted
-      }
-    }
     onChange(null)
   }
 
@@ -91,9 +97,9 @@ export default function PhotoUpload({
           }
           {uploading && (
             <div className="pu-overlay">
-              <div className="pu-progress-ring">
-                <span>{progress}%</span>
-              </div>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#e8a020' }}>
+                {progress}%
+              </span>
             </div>
           )}
         </div>
