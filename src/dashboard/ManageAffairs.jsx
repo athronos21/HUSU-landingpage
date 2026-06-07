@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useCollection, addDocument, updateDocument, deleteDocument } from '../hooks/useFirestore'
 import { useAuth } from '../context/AuthContext'
 import { affairs as staticAffairs } from '../data/data'
+import PhotoUpload from './PhotoUpload'
 import './Dashboard.css'
 
 const COLORS = [
@@ -11,9 +12,10 @@ const COLORS = [
 
 const empty = {
   name: '', icon: '🏛️', description: '', color: '#1a3a6b',
-  headName: '', headTitle: 'Head',
-  assocName: '', assocTitle: 'Associative Head',
+  headName: '', headTitle: 'Head', headImage: null,
+  assocName: '', assocTitle: 'Associative Head', assocImage: null,
   status: 'active',
+  image: null,
 }
 
 export default function ManageAffairs() {
@@ -44,9 +46,12 @@ export default function ManageAffairs() {
       color:      item.color       || '#1a3a6b',
       headName:   item.head?.name  || '',
       headTitle:  item.head?.title || 'Head',
+      headImage:  item.head?.image || null,
       assocName:  item.associativeHead?.name  || '',
       assocTitle: item.associativeHead?.title || 'Associative Head',
+      assocImage: item.associativeHead?.image || null,
       status:     item.status      || 'active',
+      image:      item.image       || null,
     })
     setEditId(item.id); setError(''); setModal(true)
   }
@@ -62,8 +67,9 @@ export default function ManageAffairs() {
       description: form.description,
       color:       form.color,
       status:      form.status,
-      head:        { name: form.headName,  title: form.headTitle  },
-      associativeHead: { name: form.assocName, title: form.assocTitle },
+      image:       form.image || null,
+      head:        { name: form.headName,  title: form.headTitle,  image: form.headImage  || null },
+      associativeHead: { name: form.assocName, title: form.assocTitle, image: form.assocImage || null },
     }
     try {
       if (editId) await updateDocument('affairs', editId, data)
@@ -274,29 +280,62 @@ export default function ManageAffairs() {
                 />
               </div>
 
+              {/* Affair cover image */}
+              <PhotoUpload
+                value={form.image}
+                onChange={url => setField('image', url)}
+                folder="affairs"
+                label="Affair Cover Image (optional)"
+                size="lg"
+                shape="square"
+                initials={form.icon || '🏛️'}
+              />
+
               {/* Leadership */}
               <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '16px', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <p style={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>
                   Leadership
                 </p>
-                <div className="db-form-row">
-                  <div className="db-field">
-                    <label>Head Name</label>
-                    <input value={form.headName} onChange={e => setField('headName', e.target.value)} placeholder="Full name" />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                  {/* Head */}
+                  <div className="db-form" style={{ gap: 10 }}>
+                    <PhotoUpload
+                      value={form.headImage}
+                      onChange={url => setField('headImage', url)}
+                      folder="affairs/leaders"
+                      label="Head Photo"
+                      size="md"
+                      shape="circle"
+                      initials={form.headName?.[0] || 'H'}
+                    />
+                    <div className="db-field">
+                      <label>Head Name</label>
+                      <input value={form.headName} onChange={e => setField('headName', e.target.value)} placeholder="Full name" />
+                    </div>
+                    <div className="db-field">
+                      <label>Head Title</label>
+                      <input value={form.headTitle} onChange={e => setField('headTitle', e.target.value)} placeholder="Head" />
+                    </div>
                   </div>
-                  <div className="db-field">
-                    <label>Head Title</label>
-                    <input value={form.headTitle} onChange={e => setField('headTitle', e.target.value)} placeholder="Head" />
-                  </div>
-                </div>
-                <div className="db-form-row">
-                  <div className="db-field">
-                    <label>Associative Head Name</label>
-                    <input value={form.assocName} onChange={e => setField('assocName', e.target.value)} placeholder="Full name" />
-                  </div>
-                  <div className="db-field">
-                    <label>Associative Head Title</label>
-                    <input value={form.assocTitle} onChange={e => setField('assocTitle', e.target.value)} placeholder="Associative Head" />
+                  {/* Assoc Head */}
+                  <div className="db-form" style={{ gap: 10 }}>
+                    <PhotoUpload
+                      value={form.assocImage}
+                      onChange={url => setField('assocImage', url)}
+                      folder="affairs/leaders"
+                      label="Assoc. Head Photo"
+                      size="md"
+                      shape="circle"
+                      initials={form.assocName?.[0] || 'A'}
+                    />
+                    <div className="db-field">
+                      <label>Associative Head Name</label>
+                      <input value={form.assocName} onChange={e => setField('assocName', e.target.value)} placeholder="Full name" />
+                    </div>
+                    <div className="db-field">
+                      <label>Associative Head Title</label>
+                      <input value={form.assocTitle} onChange={e => setField('assocTitle', e.target.value)} placeholder="Associative Head" />
+                    </div>
                   </div>
                 </div>
               </div>

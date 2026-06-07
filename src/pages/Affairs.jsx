@@ -74,7 +74,12 @@ export default function Affairs() {
                     <div className="affair-leaders-row">
                       {affair.head?.name && (
                         <div className="affair-leader-pill" style={{ '--lc': affair.color || '#1a3a6b' }}>
-                          <div className="alp-avatar">{affair.head.name.charAt(0)}</div>
+                          <div className="alp-avatar">
+                            {affair.head.image
+                              ? <img src={affair.head.image} alt={affair.head.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                              : affair.head.name.charAt(0)
+                            }
+                          </div>
                           <div>
                             <span>Head</span>
                             <strong>{affair.head.name}</strong>
@@ -83,7 +88,12 @@ export default function Affairs() {
                       )}
                       {affair.associativeHead?.name && (
                         <div className="affair-leader-pill" style={{ '--lc': affair.color || '#1a3a6b' }}>
-                          <div className="alp-avatar">{affair.associativeHead.name.charAt(0)}</div>
+                          <div className="alp-avatar">
+                            {affair.associativeHead.image
+                              ? <img src={affair.associativeHead.image} alt={affair.associativeHead.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                              : affair.associativeHead.name.charAt(0)
+                            }
+                          </div>
                           <div>
                             <span>Associative Head</span>
                             <strong>{affair.associativeHead.name}</strong>

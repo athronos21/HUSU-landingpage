@@ -1,0 +1,85 @@
+.pu-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pu-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.pu-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Preview box */
+.pu-preview {
+  position: relative;
+  background: linear-gradient(135deg, #1a3a6b, #2a5298);
+  border: 2px solid rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.pu-preview:hover { border-color: rgba(232,160,32,0.4); }
+
+.pu-circle  { border-radius: 50%; }
+.pu-square  { border-radius: 10px; }
+
+.pu-initials {
+  font-weight: 800;
+  color: rgba(255,255,255,0.7);
+  user-select: none;
+  line-height: 1;
+}
+
+/* Upload overlay */
+.pu-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+
+.pu-progress-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pu-progress-ring span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #e8a020;
+}
+
+/* Controls */
+.pu-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.pu-hint {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.25);
+}
+
+.pu-error {
+  font-size: 0.75rem;
+  color: #fca5a5;
+}
