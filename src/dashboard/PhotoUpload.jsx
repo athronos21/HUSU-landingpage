@@ -1,14 +1,14 @@
 import { useState, useRef } from 'react'
-import { auth } from '../firebase'
 import './PhotoUpload.css'
 
-const BUCKET = 'husu-f7abc.firebasestorage.app'
+const CLOUD_NAME   = 'dvc5ijan'
+const UPLOAD_PRESET = 'i0ysxxhc'
 
 /**
- * PhotoUpload — uploads via Firebase Storage REST API (no CORS issues)
+ * PhotoUpload — uploads to Cloudinary (free, no CORS issues)
  */
 export default function PhotoUpload({
-  value, onChange, folder = 'uploads',
+  value, onChange, folder = 'husu',
   label = 'Photo', size = 'md', shape = 'circle', initials = '?'
 }) {
   const [uploading, setUploading] = useState(false)
@@ -22,50 +22,35 @@ export default function PhotoUpload({
   const handleFile = async (file) => {
     if (!file) return
     if (!file.type.startsWith('image/')) { setError('Only image files allowed.'); return }
-    if (file.size > 5 * 1024 * 1024) { setError('Max file size is 5MB.'); return }
+    if (file.size > 10 * 1024 * 1024) { setError('Max file size is 10MB.'); return }
 
     setError('')
     setUploading(true)
-    setProgress(10)
+    setProgress(20)
 
     try {
-      // Get auth token
-      const token = await auth.currentUser?.getIdToken()
-      if (!token) throw new Error('Not authenticated')
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('upload_preset', UPLOAD_PRESET)
+      formData.append('folder', folder)
 
-      // Build upload URL
-      const ext      = file.name.split('.').pop()
-      const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const encodedName = encodeURIComponent(fileName)
-      const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o?uploadType=media&name=${encodedName}`
+      setProgress(40)
 
-      setProgress(30)
-
-      // Upload via fetch (avoids XMLHttpRequest CORS preflight)
-      const res = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Firebase ${token}`,
-          'Content-Type': file.type,
-        },
-        body: file,
-      })
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+        { method: 'POST', body: formData }
+      )
 
       setProgress(80)
 
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}))
-        throw new Error(errBody.error?.message || `HTTP ${res.status}`)
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error?.message || `HTTP ${res.status}`)
       }
 
       const data = await res.json()
-      setProgress(90)
-
-      // Build download URL
-      const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(fileName)}?alt=media&token=${data.downloadTokens}`
-
       setProgress(100)
-      onChange(downloadUrl)
+      onChange(data.secure_url)
       setError('')
     } catch (err) {
       console.error('Upload error:', err)
@@ -125,7 +110,7 @@ export default function PhotoUpload({
               Remove
             </button>
           )}
-          <span className="pu-hint">JPG, PNG, WebP · max 5MB</span>
+          <span className="pu-hint">JPG, PNG, WebP · max 10MB</span>
           {error && <span className="pu-error">{error}</span>}
         </div>
       </div>
