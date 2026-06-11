@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { management, affairs } from '../data/data'
 import { FacebookIcon, TikTokIcon, XIcon, LinkedInIcon, TelegramIcon } from '../components/SocialIcons'
-import { useNews, useEvents, useContact, useSiteSettings } from '../hooks/usePublicData'
+import { useNews, useEvents, useContact, useSiteSettings, useTeam, useAffairs } from '../hooks/usePublicData'
+import { renderIcon } from '../dashboard/IconPicker'
 import './Home.css'
 
 /* ── Animated counter hook ── */
@@ -49,7 +49,7 @@ function StatItem({ value, label, icon, isLast }) {
 
   return (
     <div className="stat-item" ref={ref}>
-      <span className="stat-icon">{icon}</span>
+      <span className="stat-icon">{renderIcon(icon, 28) || '📊'}</span>
       <div className="stat-body">
         <span className="stat-val">{count || value}</span>
         <span className="stat-lbl">{label}</span>
@@ -71,7 +71,7 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-const values = [
+const defaultValues = [
   { icon: '🎯', title: 'Mission-Driven', desc: 'Every action guided by student welfare and academic excellence.' },
   { icon: '🤝', title: 'Inclusive',      desc: 'Representing every student regardless of background.' },
   { icon: '⚡', title: 'Empowering',     desc: 'Giving students the tools and voice to succeed.' },
@@ -81,13 +81,18 @@ const values = [
 export default function Home() {
   const site    = useSiteSettings()
   const contact = useContact()
-  const { data: newsData }   = useNews()
-  const { data: eventsData } = useEvents()
+  const { data: newsData }      = useNews()
+  const { data: eventsData }    = useEvents()
+  const { data: management }    = useTeam()
+  const { data: affairs }       = useAffairs()
 
   const hero   = site.hero
   const stats  = site.stats
   const about  = site.about
-  const footer = site.footer
+  const values = (site.values && site.values.length > 0) ? site.values : defaultValues
+
+  // Guard: don't render leadership section until team data is loaded
+  const president = management[0]
 
   return (
     <div className="home">
@@ -127,7 +132,7 @@ export default function Home() {
                 { label: 'Facebook', url: contact.facebook, color: '#1877F2', icon: <FacebookIcon size={16} /> },
                 { label: 'Telegram', url: contact.telegram, color: '#229ED9', icon: <TelegramIcon size={16} /> },
                 { label: 'TikTok',   url: contact.tiktok,   color: '#69C9D0', icon: <TikTokIcon size={16} /> },
-                { label: 'X',        url: contact.x,         color: '#e2e8f0', icon: <XIcon size={16} /> },
+                { label: 'X',        url: contact.x,        color: '#e2e8f0', icon: <XIcon size={16} /> },
               ].map(s => (
                 <a key={s.label} href={s.url} target="_blank" rel="noreferrer"
                   aria-label={s.label} className="hero-social-btn" style={{ '--sc': s.color }}>
@@ -156,7 +161,7 @@ export default function Home() {
                   <p>Haramaya University<br />Students' Union</p>
                   <div className="hcs-divider" />
                   <div className="hcs-stats">
-                    {stats.slice(0,3).map((s, i) => (
+                    {stats.slice(0, 3).map((s, i) => (
                       <div key={i}><strong>{s.value}</strong><span>{s.label}</span></div>
                     ))}
                   </div>
@@ -196,9 +201,9 @@ export default function Home() {
           </div>
 
           <div className="values-grid">
-            {values.map(v => (
-              <div key={v.title} className="value-card">
-                <span className="value-icon">{v.icon}</span>
+            {values.map((v, i) => (
+              <div key={i} className="value-card">
+                <span className="value-icon">{renderIcon(v.icon, 32) || '⭐'}</span>
                 <h4>{v.title}</h4>
                 <p>{v.desc}</p>
               </div>
@@ -213,20 +218,20 @@ export default function Home() {
           <div className="sh-row">
             <div>
               <p className="section-subtitle">What we do</p>
-              <h2 className="section-title">Our Three Main Affairs</h2>
+              <h2 className="section-title">Our Main Affairs</h2>
               <div className="accent-bar" />
             </div>
             <Link to="/affairs" className="btn btn-primary">View All →</Link>
           </div>
           <div className="affairs-row">
-            {affairs.map((a, i) => (
-              <div key={a.id} className="affair-card" style={{ '--ac': a.color }}>
+            {affairs.slice(0, 3).map((a, i) => (
+              <div key={a.id || i} className="affair-card" style={{ '--ac': a.color || '#1a3a6b' }}>
                 <div className="ac-top">
-                  <span className="ac-num">0{i + 1}</span>
-                  <span className="ac-icon">{a.icon}</span>
+                  <span className="ac-num">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="ac-icon">{renderIcon(a.icon, 36) || '🏛️'}</span>
                 </div>
                 <h3>{a.name}</h3>
-                <p>{a.description.slice(0, 105)}…</p>
+                <p>{(a.description || '').slice(0, 105)}…</p>
                 <Link to="/affairs" className="ac-more">
                   Learn more
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
@@ -240,58 +245,61 @@ export default function Home() {
       </section>
 
       {/* ══════════════ LEADERSHIP ══════════════ */}
-      <section className="section leadership-section">
-        <div className="container">
-          <div className="leadership-header">
-            <div>
-              <p className="section-subtitle">Who leads us</p>
-              <h2 className="section-title">Union Leadership</h2>
-              <div className="accent-bar" />
-              <p className="leadership-intro">Meet the dedicated team representing the voice of every student.</p>
+      {president && (
+        <section className="section leadership-section">
+          <div className="container">
+            <div className="leadership-header">
+              <div>
+                <p className="section-subtitle">Who leads us</p>
+                <h2 className="section-title">Union Leadership</h2>
+                <div className="accent-bar" />
+                <p className="leadership-intro">Meet the dedicated team representing the voice of every student.</p>
+              </div>
+              <Link to="/about" className="btn btn-primary">View Full Team →</Link>
             </div>
-            <Link to="/about" className="btn btn-primary">View Full Team →</Link>
-          </div>
 
-          <div className="president-spotlight">
-            <div className="ps-left">
-              <div className="ps-avatar">
-                {management[0].image
-                  ? <img src={management[0].image} alt={management[0].name} />
-                  : <span>{management[0].name.split(' ').map(n => n[0]).join('')}</span>
-                }
-                <div className="ps-avatar-ring" />
+            <div className="president-spotlight">
+              <div className="ps-left">
+                <div className="ps-avatar">
+                  {president.image
+                    ? <img src={president.image} alt={president.name} />
+                    : <span>{president.name?.split(' ').map(n => n[0]).join('') || 'P'}</span>
+                  }
+                  <div className="ps-avatar-ring" />
+                </div>
+              </div>
+              <div className="ps-right">
+                <span className="ps-role-badge">{president.title || 'President'}</span>
+                <h3>{president.name}</h3>
+                <div className="ps-divider" />
+                <p>{president.bio}</p>
+                <div className="ps-quote">"Leading with integrity, serving with purpose."</div>
               </div>
             </div>
-            <div className="ps-right">
-              <span className="ps-role-badge">President</span>
-              <h3>{management[0].name}</h3>
-              <div className="ps-divider" />
-              <p>{management[0].bio}</p>
-              <div className="ps-quote">"Leading with integrity, serving with purpose."</div>
-            </div>
-          </div>
 
-          <div className="members-grid">
-            {management.slice(1).map((m) => (
-              <div key={m.id} className="member-card">
-                <div className="mc-top">
-                  <div className="mc-avatar">
-                    {m.image ? <img src={m.image} alt={m.name} />
-                      : <span>{m.name.split(' ').map(n => n[0]).join('')}</span>
-                    }
+            <div className="members-grid">
+              {management.slice(1).map((m, i) => (
+                <div key={m.id || i} className="member-card">
+                  <div className="mc-top">
+                    <div className="mc-avatar">
+                      {m.image
+                        ? <img src={m.image} alt={m.name} />
+                        : <span>{m.name?.split(' ').map(n => n[0]).join('') || '?'}</span>
+                      }
+                    </div>
                   </div>
+                  <div className="mc-body">
+                    <span className="mc-role">{m.title}</span>
+                    <h4>{m.name}</h4>
+                    <p>{(m.bio || '').slice(0, 80)}…</p>
+                  </div>
+                  <div className="mc-bar" />
                 </div>
-                <div className="mc-body">
-                  <span className="mc-role">{m.title}</span>
-                  <h4>{m.name}</h4>
-                  <p>{m.bio.slice(0, 80)}…</p>
-                </div>
-                <div className="mc-bar" />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ══════════════ NEWS PREVIEW ══════════════ */}
       <section className="section news-preview-section">
@@ -393,7 +401,7 @@ export default function Home() {
                 { label: 'Facebook', url: contact.facebook, color: '#1877F2', icon: <FacebookIcon /> },
                 { label: 'Telegram', url: contact.telegram, color: '#229ED9', icon: <TelegramIcon /> },
                 { label: 'TikTok',   url: contact.tiktok,   color: '#69C9D0', icon: <TikTokIcon /> },
-                { label: 'X',        url: contact.x,         color: '#e2e8f0', icon: <XIcon /> },
+                { label: 'X',        url: contact.x,        color: '#e2e8f0', icon: <XIcon /> },
                 { label: 'LinkedIn', url: contact.linkedin,  color: '#0A66C2', icon: <LinkedInIcon /> },
               ].map(s => (
                 <a key={s.label} href={s.url} target="_blank" rel="noreferrer"

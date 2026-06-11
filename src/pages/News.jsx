@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
-import { news } from '../data/data'
+import { useNews } from '../hooks/usePublicData'
 import { TelegramIcon } from '../components/SocialIcons'
 import './News.css'
 
-const TELEGRAM_CHANNEL = 'HUSUNews'
+const TELEGRAM_CHANNEL = 'HUSU_News'
 
 const categoryColors = {
   Announcement: { bg: '#1a3a6b22', color: '#4a7fd4', border: '#1a3a6b44' },
@@ -21,6 +21,7 @@ function formatDate(dateStr) {
 }
 
 export default function News() {
+  const { data: news, loading } = useNews()
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
 
@@ -109,6 +110,10 @@ export default function News() {
           </div>
 
           {/* Results count */}
+          {loading ? (
+            <p style={{ color: 'rgba(255,255,255,0.35)', padding: '40px 0', textAlign: 'center' }}>Loading news…</p>
+          ) : (
+          <>
           <p className="news-results-count">
             Showing <strong>{filtered.length}</strong> of <strong>{news.length}</strong> articles
           </p>
@@ -136,6 +141,9 @@ export default function News() {
                         >
                           {item.category}
                         </span>
+                        {item.affair && (
+                          <span className="nc-affair">🏛️ {item.affair} Affair</span>
+                        )}
                         <span className="nc-date">{formatDate(item.date)}</span>
                       </div>
                       <h3>{item.title}</h3>
@@ -164,6 +172,8 @@ export default function News() {
               Join Channel
             </a>
           </div>
+          </>
+          )}
 
         </div>
       </section>

@@ -1,28 +1,71 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '../firebase'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [profile, setProfile] = useState(null)  // { role, affairId, name }
-  const [loading, setLoading] = useState(true)
+  const [user,    setUser]    = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)  // true until BOTH auth + profile resolved
+  const signingOut = useRef(false)
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser)
-        const snap = await getDoc(doc(db, 'users', firebaseUser.uid))
-        setProfile(snap.exists() ? snap.data() : null)
-      } else {
+    let profileUnsub = null
+
+    const authUnsub = onAuthStateChanged(auth, (firebaseUser) => {
+      // Tear down previous Firestore listener
+      if (profileUnsub) { profileUnsub(); profileUnsub = null }
+
+      if (!firebaseUser) {
+        // Signed out — clear everything and stop loading
         setUser(null)
         setProfile(null)
+        setLoading(false)
+        signingOut.current = false
+        return
       }
-      setLoading(false)
+
+      // Auth session exists — start listening to the Firestore profile.
+      // Keep loading=true until the first snapshot resolves.
+      setUser(firebaseUser)
+      const ref = doc(db, 'users', firebaseUser.uid)
+
+      profileUnsub = onSnapshot(ref, async (snap) => {
+        if (!snap.exists()) {
+          // Doc not written yet (signup race) — keep loading until it appears
+          return
+        }
+
+        const data = snap.data()
+
+        if (data.status === 'pending') {
+          // Block pending users — sign out once
+          setProfile(null)
+          setLoading(false)
+          if (!signingOut.current) {
+            signingOut.current = true
+            auth.signOut()  // → onAuthStateChanged(null) will clear user
+          }
+          return
+        }
+
+        // Valid active user — set profile and stop loading
+        setProfile(data)
+        setLoading(false)
+
+      }, () => {
+        // Snapshot error
+        setProfile(null)
+        setLoading(false)
+      })
     })
-    return unsub
+
+    return () => {
+      authUnsub()
+      if (profileUnsub) profileUnsub()
+    }
   }, [])
 
   return (

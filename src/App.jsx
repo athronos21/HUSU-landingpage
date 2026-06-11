@@ -14,10 +14,12 @@ const News     = lazy(() => import('./pages/News'))
 const Events   = lazy(() => import('./pages/Events'))
 const Affairs  = lazy(() => import('./pages/Affairs'))
 const Contact  = lazy(() => import('./pages/Contact'))
+const Election = lazy(() => import('./pages/Election'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 // Dashboard pages
 const Login              = lazy(() => import('./dashboard/Login'))
+const ChangePassword     = lazy(() => import('./dashboard/ChangePassword'))
 const DashboardLayout    = lazy(() => import('./dashboard/DashboardLayout'))
 const Overview           = lazy(() => import('./dashboard/Overview'))
 const ManageSiteSettings = lazy(() => import('./dashboard/ManageSiteSettings'))
@@ -27,6 +29,11 @@ const ManageAffairs      = lazy(() => import('./dashboard/ManageAffairs'))
 const ManageTeam         = lazy(() => import('./dashboard/ManageTeam'))
 const ManageContact      = lazy(() => import('./dashboard/ManageContact'))
 const ManageUsers        = lazy(() => import('./dashboard/ManageUsers'))
+const MyProfile          = lazy(() => import('./dashboard/MyProfile'))
+const Letters            = lazy(() => import('./dashboard/Letters'))
+const Messages           = lazy(() => import('./dashboard/Messages'))
+const ManageElections    = lazy(() => import('./dashboard/ManageElections'))
+const Vote               = lazy(() => import('./dashboard/Vote'))
 
 const pageTitles = {
   '/':         'Home',
@@ -89,7 +96,7 @@ function PublicLayout({ children }) {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <PageTitle />
         <Suspense fallback={<PageLoader />}>
@@ -102,9 +109,15 @@ export default function App() {
             <Route path="/events"  element={<PublicLayout><Events /></PublicLayout>} />
             <Route path="/affairs" element={<PublicLayout><Affairs /></PublicLayout>} />
             <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
+            <Route path="/election" element={<PublicLayout><Election /></PublicLayout>} />
 
             {/* ── Auth ── */}
             <Route path="/login" element={<Login />} />
+            <Route path="/change-password" element={
+              <ProtectedRoute>
+                <ChangePassword />
+              </ProtectedRoute>
+            } />
 
             {/* ── Dashboard ── */}
             <Route path="/dashboard" element={
@@ -114,12 +127,17 @@ export default function App() {
             }>
               <Route index element={<Overview />} />
               <Route path="site"    element={<ProtectedRoute allowedRoles={['admin']}><ManageSiteSettings /></ProtectedRoute>} />
-              <Route path="news"    element={<ProtectedRoute allowedRoles={['admin','news_org']}><ManageNews /></ProtectedRoute>} />
-              <Route path="events"  element={<ProtectedRoute allowedRoles={['admin','events_org']}><ManageEvents /></ProtectedRoute>} />
-              <Route path="affairs" element={<ProtectedRoute allowedRoles={['admin','affair_head']}><ManageAffairs /></ProtectedRoute>} />
+              <Route path="news"    element={<ProtectedRoute allowedRoles={['admin','news_org','affair_head','assoc_head']}><ManageNews /></ProtectedRoute>} />
+              <Route path="events"  element={<ProtectedRoute allowedRoles={['admin','events_org','affair_head','assoc_head']}><ManageEvents /></ProtectedRoute>} />
+              <Route path="affairs" element={<ProtectedRoute allowedRoles={['admin','affair_head','assoc_head']}><ManageAffairs /></ProtectedRoute>} />
               <Route path="team"    element={<ProtectedRoute allowedRoles={['admin']}><ManageTeam /></ProtectedRoute>} />
               <Route path="contact" element={<ProtectedRoute allowedRoles={['admin']}><ManageContact /></ProtectedRoute>} />
-              <Route path="users"   element={<ProtectedRoute allowedRoles={['admin']}><ManageUsers /></ProtectedRoute>} />
+              <Route path="users"    element={<ProtectedRoute allowedRoles={['admin']}><ManageUsers /></ProtectedRoute>} />
+              <Route path="profile"   element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+              <Route path="letters"   element={<ProtectedRoute><Letters /></ProtectedRoute>} />
+              <Route path="messages"  element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+              <Route path="elections" element={<ProtectedRoute allowedRoles={['admin']}><ManageElections /></ProtectedRoute>} />
+              <Route path="vote"      element={<ProtectedRoute><Vote /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />

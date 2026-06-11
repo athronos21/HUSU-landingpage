@@ -1,0 +1,240 @@
+/* ── Trigger button ── */
+.ip-wrap { display: flex; flex-direction: column; gap: 6px; }
+
+.ip-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.5px;
+}
+
+.ip-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+  width: fit-content;
+}
+.ip-trigger:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2); }
+
+.ip-preview {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 6px;
+}
+.ip-trigger-text { font-weight: 600; }
+.ip-trigger-arrow { color: rgba(255,255,255,0.3); font-size: 0.75rem; }
+
+/* ── Overlay ── */
+.ip-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: ipFade 0.15s ease;
+}
+@keyframes ipFade { from { opacity: 0 } to { opacity: 1 } }
+
+/* ── Modal ── */
+.ip-modal {
+  background: #0f2040;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: ipSlide 0.18s ease;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+}
+@keyframes ipSlide { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+.ip-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+
+.ip-paste-hint {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 20px;
+  background: rgba(232,160,32,0.07);
+  border-bottom: 1px solid rgba(232,160,32,0.15);
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.45);
+  flex-shrink: 0;
+}
+.ip-paste-hint kbd {
+  background: rgba(232,160,32,0.18);
+  border: 1px solid rgba(232,160,32,0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #e8a020;
+}
+.ip-modal-title { font-weight: 700; color: #fff; font-size: 1rem; }
+.ip-close {
+  background: rgba(255,255,255,0.07); border: none;
+  color: rgba(255,255,255,0.5); width: 30px; height: 30px;
+  border-radius: 50%; cursor: pointer; font-size: 0.8rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s;
+}
+.ip-close:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+/* ── Tabs ── */
+.ip-tabs {
+  display: flex; gap: 2px;
+  padding: 10px 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.ip-tab {
+  padding: 8px 16px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.45);
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; border-radius: 8px 8px 0 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.ip-tab:hover { color: rgba(255,255,255,0.75); }
+.ip-tab.active { color: #e8a020; border-bottom-color: #e8a020; }
+
+/* ── Library tab ── */
+.ip-library {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 14px 16px;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+.ip-search {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  flex-shrink: 0;
+}
+.ip-search:focus { border-color: #e8a020; }
+
+.ip-hint {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+
+.ip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+.ip-grid::-webkit-scrollbar { width: 4px; }
+.ip-grid::-webkit-scrollbar-track { background: transparent; }
+.ip-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+
+.ip-icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.ip-icon-btn:hover { background: rgba(232,160,32,0.12); color: #e8a020; border-color: rgba(232,160,32,0.3); }
+.ip-icon-btn.selected { background: rgba(232,160,32,0.2); color: #e8a020; border-color: #e8a020; }
+
+/* ── Upload tab ── */
+.ip-upload {
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.ip-dropzone {
+  border: 2px dashed rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 40px 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.88rem;
+  transition: border-color 0.2s, background 0.2s;
+  text-align: center;
+}
+.ip-dropzone:hover { border-color: #e8a020; background: rgba(232,160,32,0.05); }
+.ip-dz-icon { font-size: 2rem; }
+.ip-dz-hint { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+
+.ip-dz-paste-badge {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(232,160,32,0.1);
+  border: 1px solid rgba(232,160,32,0.25);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: #e8a020;
+  font-weight: 600;
+}
+.ip-dz-paste-badge kbd {
+  background: rgba(232,160,32,0.2);
+  border: 1px solid rgba(232,160,32,0.35);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 0.78rem;
+}
+
+.ip-upload-err { color: #f87171; font-size: 0.82rem; }
+
+.ip-upload-preview {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.ip-upload-preview img { width: 48px; height: 48px; object-fit: contain; }
+.ip-upload-preview span { font-size: 0.82rem; color: rgba(255,255,255,0.45); }
+
+/* ── Emoji tab ── */
+.ip-emoji-tab {
+  padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ip-emoji-row { display: flex; gap: 10px; align-items: center; }
+.ip-emoji-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.6rem;
+  text-align: center;
+  outline: none;
+}
+.ip-emoji-input:focus { border-color: #e8a020; }

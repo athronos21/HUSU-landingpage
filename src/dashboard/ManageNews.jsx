@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useCollection, addDocument, updateDocument, deleteDocument } from '../hooks/useFirestore'
+import { useAuth } from '../context/AuthContext'
 import { news as staticNews } from '../data/data'
 import './Dashboard.css'
 
 const CATEGORIES = ['Announcement', 'Academic', 'Service', 'Discipline']
 const catColors  = { Announcement: '#4a7fd4', Academic: '#10b981', Service: '#e8a020', Discipline: '#a78bfa' }
 
-const empty = { title: '', summary: '', category: 'Announcement', date: new Date().toISOString().split('T')[0] }
+const empty = { title: '', summary: '', category: 'Announcement', date: new Date().toISOString().split('T')[0], affair: '' }
 
 export default function ManageNews() {
+  const { profile } = useAuth()
   const { docs, loading } = useCollection('news', 'date')
   const [modal, setModal] = useState(false)
   const [form, setForm]   = useState(empty)
@@ -17,16 +19,26 @@ export default function ManageNews() {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
 
-  // Use static data as fallback display only
-  const items = docs.length > 0 ? docs : []
+  const isAdmin     = profile?.role === 'admin'
+  const affairName  = profile?.affairName || ''
 
+  // Non-admins can only edit/delete their own posts
+  const canModify = (item) => isAdmin || item.createdBy === profile?.email
+
+  const items    = docs.length > 0 ? docs : []
   const filtered = items.filter(n =>
     n.title?.toLowerCase().includes(search.toLowerCase()) ||
     n.category?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const openAdd  = () => { setForm(empty); setEditId(null); setError(''); setModal(true) }
-  const openEdit = (item) => { setForm({ title: item.title, summary: item.summary, category: item.category, date: item.date }); setEditId(item.id); setError(''); setModal(true) }
+  const openAdd  = () => {
+    setForm({ ...empty, affair: affairName })
+    setEditId(null); setError(''); setModal(true)
+  }
+  const openEdit = (item) => {
+    setForm({ title: item.title, summary: item.summary, category: item.category, date: item.date, affair: item.affair || '' })
+    setEditId(item.id); setError(''); setModal(true)
+  }
   const closeModal = () => { setModal(false); setForm(empty); setEditId(null); setError('') }
 
   const handleSave = async e => {
@@ -34,8 +46,9 @@ export default function ManageNews() {
     if (!form.title || !form.summary || !form.date) { setError('All fields are required.'); return }
     setSaving(true)
     try {
-      if (editId) await updateDocument('news', editId, form)
-      else         await addDocument('news', form)
+      const data = { ...form, createdBy: profile?.email || '' }
+      if (editId) await updateDocument('news', editId, data)
+      else         await addDocument('news', data)
       closeModal()
     } catch (err) {
       setError('Failed to save. Please try again.')
@@ -52,7 +65,7 @@ export default function ManageNews() {
   const seedStatic = async () => {
     if (!confirm('Seed all static news items into Firestore?')) return
     for (const item of staticNews) {
-      await addDocument('news', { title: item.title, summary: item.summary, category: item.category, date: item.date })
+      await addDocument('news', { title: item.title, summary: item.summary, category: item.category, date: item.date, affair: '', createdBy: '' })
     }
   }
 
@@ -105,8 +118,15 @@ export default function ManageNews() {
                   <td style={{ whiteSpace: 'nowrap' }}>{item.date}</td>
                   <td>
                     <div className="db-table-actions">
-                      <button className="db-btn db-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => openEdit(item)}>Edit</button>
-                      <button className="db-btn db-btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDelete(item.id)}>Delete</button>
+                      {canModify(item) && (
+                        <button className="db-btn db-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => openEdit(item)}>Edit</button>
+                      )}
+                      {isAdmin && (
+                        <button className="db-btn db-btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDelete(item.id)}>Delete</button>
+                      )}
+                      {!canModify(item) && !isAdmin && (
+                        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)' }}>View only</span>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -143,6 +163,12 @@ export default function ManageNews() {
                   <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
                 </div>
               </div>
+              {!isAdmin && affairName && (
+                <div className="db-field">
+                  <label>Affair</label>
+                  <input value={form.affair} disabled style={{ opacity: 0.5 }} />
+                </div>
+              )}
               <div className="db-form-actions">
                 <button type="button" className="db-btn db-btn-ghost" onClick={closeModal}>Cancel</button>
                 <button type="submit" className="db-btn db-btn-primary" disabled={saving}>{saving ? 'Saving…' : (editId ? 'Update' : 'Publish')}</button>

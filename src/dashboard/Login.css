@@ -140,3 +140,53 @@
   transition: color 0.2s;
 }
 .login-back a:hover { color: rgba(255,255,255,0.7); }
+
+/* ── Login/Signup tabs ── */
+.login-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 9px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.login-tab:hover { color: rgba(255,255,255,0.7); }
+.login-tab.active {
+  background: #e8a020;
+  color: #0d1f3c;
+}
+
+/* ── Pending state ── */
+.login-pending {
+  text-align: center;
+  padding: 16px 0;
+}
+.login-pending-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+.login-pending h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+}
+.login-pending p {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.7;
+}

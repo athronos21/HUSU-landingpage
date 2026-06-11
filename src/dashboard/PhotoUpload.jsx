@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import './PhotoUpload.css'
 
-const CLOUD_NAME   = 'dvc5ijan'
+const CLOUD_NAME   = 'dvc5ijanb'
 const UPLOAD_PRESET = 'i0ysxxhc'
 
 /**

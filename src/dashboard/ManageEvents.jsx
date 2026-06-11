@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useCollection, addDocument, updateDocument, deleteDocument } from '../hooks/useFirestore'
+import { useAuth } from '../context/AuthContext'
 import { events as staticEvents } from '../data/data'
 import './Dashboard.css'
 
@@ -9,10 +10,11 @@ const catColors  = { Sports: '#10b981', Academic: '#4a7fd4', Workshop: '#a78bfa'
 const empty = {
   title: '', description: '', category: 'Academic',
   date: new Date().toISOString().split('T')[0],
-  time: '', location: '',
+  time: '', location: '', affair: '',
 }
 
 export default function ManageEvents() {
+  const { profile } = useAuth()
   const { docs, loading } = useCollection('events', 'date')
   const [modal, setModal]   = useState(false)
   const [form, setForm]     = useState(empty)
@@ -21,14 +23,22 @@ export default function ManageEvents() {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
 
+  const isAdmin    = profile?.role === 'admin'
+  const affairName = profile?.affairName || ''
+
+  const canModify = (item) => isAdmin || item.createdBy === profile?.email
+
   const filtered = docs.filter(e =>
     e.title?.toLowerCase().includes(search.toLowerCase()) ||
     e.category?.toLowerCase().includes(search.toLowerCase())
   )
 
-  const openAdd  = () => { setForm(empty); setEditId(null); setError(''); setModal(true) }
+  const openAdd  = () => {
+    setForm({ ...empty, affair: affairName })
+    setEditId(null); setError(''); setModal(true)
+  }
   const openEdit = (item) => {
-    setForm({ title: item.title, description: item.description, category: item.category, date: item.date, time: item.time || '', location: item.location || '' })
+    setForm({ title: item.title, description: item.description, category: item.category, date: item.date, time: item.time || '', location: item.location || '', affair: item.affair || '' })
     setEditId(item.id); setError(''); setModal(true)
   }
   const closeModal = () => { setModal(false); setForm(empty); setEditId(null); setError('') }
@@ -38,8 +48,9 @@ export default function ManageEvents() {
     if (!form.title || !form.date) { setError('Title and date are required.'); return }
     setSaving(true)
     try {
-      if (editId) await updateDocument('events', editId, form)
-      else         await addDocument('events', form)
+      const data = { ...form, createdBy: profile?.email || '' }
+      if (editId) await updateDocument('events', editId, data)
+      else         await addDocument('events', data)
       closeModal()
     } catch {
       setError('Failed to save. Please try again.')
@@ -56,7 +67,7 @@ export default function ManageEvents() {
   const seedStatic = async () => {
     if (!confirm('Seed all static events into Firestore?')) return
     for (const item of staticEvents) {
-      await addDocument('events', { title: item.title, description: item.description, category: item.category, date: item.date, time: item.time, location: item.location })
+      await addDocument('events', { title: item.title, description: item.description, category: item.category, date: item.date, time: item.time, location: item.location, affair: '', createdBy: '' })
     }
   }
 
@@ -110,8 +121,15 @@ export default function ManageEvents() {
                   <td style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', maxWidth: 180 }}>{item.location}</td>
                   <td>
                     <div className="db-table-actions">
-                      <button className="db-btn db-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => openEdit(item)}>Edit</button>
-                      <button className="db-btn db-btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDelete(item.id)}>Delete</button>
+                      {canModify(item) && (
+                        <button className="db-btn db-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => openEdit(item)}>Edit</button>
+                      )}
+                      {isAdmin && (
+                        <button className="db-btn db-btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDelete(item.id)}>Delete</button>
+                      )}
+                      {!canModify(item) && !isAdmin && (
+                        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)' }}>View only</span>
+                      )}
                     </div>
                   </td>
                 </tr>

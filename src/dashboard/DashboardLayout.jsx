@@ -3,25 +3,24 @@ import { NavLink, useNavigate, Outlet } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
 import { useAuth } from '../context/AuthContext'
+import { ROLE_LABELS, NAV_ACCESS, DASHBOARD_ROLES } from './roles'
 import './DashboardLayout.css'
 
 const allNavItems = [
-  { to: '/dashboard',           label: 'Overview',     icon: '📊', roles: ['admin','affair_head','news_org','events_org'] },
-  { to: '/dashboard/site',      label: 'Site Settings',icon: '🌐', roles: ['admin'] },
-  { to: '/dashboard/news',      label: 'News',         icon: '📰', roles: ['admin','news_org'] },
-  { to: '/dashboard/events',    label: 'Events',       icon: '📅', roles: ['admin','events_org'] },
-  { to: '/dashboard/affairs',   label: 'Affairs',      icon: '🏛️', roles: ['admin','affair_head'] },
-  { to: '/dashboard/team',      label: 'Leadership',   icon: '👥', roles: ['admin'] },
-  { to: '/dashboard/contact',   label: 'Contact Info', icon: '📬', roles: ['admin'] },
-  { to: '/dashboard/users',     label: 'Users',        icon: '🔐', roles: ['admin'] },
+  { to: '/dashboard',             label: 'Overview',     icon: '📊', key: 'overview'   },
+  { to: '/dashboard/site',        label: 'Site Settings',icon: '🌐', key: 'site'        },
+  { to: '/dashboard/news',        label: 'News',         icon: '📰', key: 'news'        },
+  { to: '/dashboard/events',      label: 'Events',       icon: '📅', key: 'events'      },
+  { to: '/dashboard/affairs',     label: 'Affairs',      icon: '🏛️', key: 'affairs'     },
+  { to: '/dashboard/team',        label: 'Leadership',   icon: '👥', key: 'team'        },
+  { to: '/dashboard/contact',     label: 'Contact Info', icon: '📬', key: 'contact'     },
+  { to: '/dashboard/users',       label: 'Members',      icon: '🔐', key: 'users'       },
+  { to: '/dashboard/elections',   label: 'Elections',    icon: '🗳️', key: 'elections'   },
+  { to: '/dashboard/vote',        label: 'Vote',         icon: '✅', key: 'vote'        },
+  { to: '/dashboard/letters',     label: 'Letters',      icon: '📨', key: 'letters'     },
+  { to: '/dashboard/messages',    label: 'Messages',     icon: '💬', key: 'messages'    },
+  { to: '/dashboard/profile',     label: 'My Profile',   icon: '👤', key: 'profile'     },
 ]
-
-const roleLabel = {
-  admin:       'Administrator',
-  affair_head: 'Affair Head',
-  news_org:    'News Organizer',
-  events_org:  'Events Organizer',
-}
 
 export default function DashboardLayout() {
   const { user, profile } = useAuth()
@@ -29,7 +28,7 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const role = profile?.role || 'admin'
-  const navItems = allNavItems.filter(n => n.roles.includes(role))
+  const navItems = allNavItems.filter(n => (NAV_ACCESS[n.key] || []).includes(role))
 
   const handleLogout = async () => {
     await signOut(auth)
@@ -53,10 +52,15 @@ export default function DashboardLayout() {
         </div>
 
         <div className="ds-user">
-          <div className="ds-avatar">{(profile?.name || user?.email || 'U')[0].toUpperCase()}</div>
+          <div className="ds-avatar">
+            {profile?.image
+              ? <img src={profile.image} alt={profile.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              : (profile?.name || user?.email || 'U')[0].toUpperCase()
+            }
+          </div>
           <div>
             <p className="ds-name">{profile?.name || user?.email}</p>
-            <p className="ds-role">{roleLabel[role] || role}</p>
+            <p className="ds-role">{ROLE_LABELS[role] || role}</p>
           </div>
         </div>
 
@@ -99,7 +103,7 @@ export default function DashboardLayout() {
             </svg>
           </button>
           <div className="dash-topbar-right">
-            <span className="dash-role-badge">{roleLabel[role] || role}</span>
+            <span className="dash-role-badge">{ROLE_LABELS[role] || role}</span>
           </div>
         </header>
 

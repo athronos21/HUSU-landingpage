@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
-import { events } from '../data/data'
+import { useEvents } from '../hooks/usePublicData'
 import { TelegramIcon } from '../components/SocialIcons'
 import './Events.css'
 
-const TELEGRAM_CHANNEL = 'HUSUEvents'
+const TELEGRAM_CHANNEL = 'HUSU_Events'
 
 const categoryStyles = {
   Sports:   { bg: '#05966922', color: '#10b981', border: '#05966944', icon: '⚽' },
@@ -28,6 +28,7 @@ function isPast(dateStr) {
 }
 
 export default function Events() {
+  const { data: events, loading } = useEvents()
   const [activeFilter, setActiveFilter] = useState('All')
 
   const filtered = useMemo(() => {
@@ -72,9 +73,12 @@ export default function Events() {
             </a>
           </div>
 
+          {loading && (
+            <p style={{ color: 'rgba(255,255,255,0.35)', padding: '40px 0', textAlign: 'center' }}>Loading events…</p>
+          )}
+
           {/* Category filters */}
-          <div className="events-filters" role="tablist" aria-label="Filter by category">
-            {ALL_CATS.map(cat => (
+          <div className="events-filters" role="tablist" aria-label="Filter by category">            {ALL_CATS.map(cat => (
               <button
                 key={cat}
                 role="tab"
@@ -119,6 +123,9 @@ export default function Events() {
                           >
                             {cat.icon} {event.category}
                           </span>
+                          {event.affair && (
+                            <span className="nc-affair">🏛️ {event.affair} Affair</span>
+                          )}
                           <span className="ec-upcoming-badge">Upcoming</span>
                         </div>
                         <h3>{event.title}</h3>
@@ -172,6 +179,9 @@ export default function Events() {
                           >
                             {cat.icon} {event.category}
                           </span>
+                          {event.affair && (
+                            <span className="nc-affair">🏛️ {event.affair} Affair</span>
+                          )}
                           <span className="ec-past-badge">Completed</span>
                         </div>
                         <h3>{event.title}</h3>

@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Link } from 'react-router-dom'
+import { usePublicElection } from '../hooks/usePublicData'
 import './Navbar.css'
-
-const links = [
-  { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
-  { to: '/affairs', label: 'Affairs' },
-  { to: '/news', label: 'News' },
-  { to: '/events', label: 'Events' },
-]
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const { election } = usePublicElection()
+
+  const links = [
+    { to: '/', label: 'Home' },
+    { to: '/about', label: 'About' },
+    { to: '/affairs', label: 'Affairs' },
+    { to: '/news', label: 'News' },
+    { to: '/events', label: 'Events' },
+    ...(election ? [{ to: '/election', label: '🗳️ Election' }] : []),
+  ]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)

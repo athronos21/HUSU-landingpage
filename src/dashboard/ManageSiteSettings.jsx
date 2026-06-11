@@ -1,15 +1,20 @@
 import { useState, useEffect } from 'react'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import IconPicker, { renderIcon } from './IconPicker'
 import './Dashboard.css'
 import './SiteSettings.css'
 
 const TABS = [
-  { id: 'hero',        label: '🏠 Hero',         icon: '🏠' },
-  { id: 'stats',       label: '📊 Stats',         icon: '📊' },
-  { id: 'about',       label: '👥 About',         icon: '👥' },
-  { id: 'banner',      label: '📢 Banner',        icon: '📢' },
-  { id: 'footer',      label: '🔻 Footer',        icon: '🔻' },
+  { id: 'hero',      label: '🏠 Hero',          icon: '🏠' },
+  { id: 'stats',     label: '📊 Stats',          icon: '📊' },
+  { id: 'about',     label: '👥 About',          icon: '👥' },
+  { id: 'values',    label: '✨ Values',          icon: '✨' },
+  { id: 'aboutPage', label: '📄 About Page',     icon: '📄' },
+  { id: 'mvItems',   label: '🎯 Mission/Vision', icon: '🎯' },
+  { id: 'banner',    label: '📢 Banner',         icon: '📢' },
+  { id: 'access',    label: '🔐 Access',         icon: '🔐' },
+  { id: 'footer',    label: '🔻 Footer',         icon: '🔻' },
 ]
 
 const defaults = {
@@ -18,25 +23,43 @@ const defaults = {
     heading1: 'Haramaya University',
     heading2: "Students' Union",
     description: 'Empowering students, championing academic excellence, and building a united campus community at Haramaya University.',
-    btn1Text: 'About the Union',
-    btn1Link: '/about',
-    btn2Text: 'Get in Touch',
-    btn2Link: '/contact',
+    btn1Text: 'About the Union', btn1Link: '/about',
+    btn2Text: 'Get in Touch',    btn2Link: '/contact',
   },
   stats: [
-    { value: '3',     label: 'Main Affairs',      icon: '🏛️' },
-    { value: '5',     label: 'Leadership Members', icon: '👥' },
-    { value: '1,000', label: 'Students Served',   icon: '🎓' },
-    { value: '2024',  label: 'Established',       icon: '📅' },
+    { value: '3',     label: 'Main Affairs',      icon: { type: 'emoji', value: '🏛️' } },
+    { value: '5',     label: 'Leadership Members', icon: { type: 'emoji', value: '👥' } },
+    { value: '1,000', label: 'Students Served',   icon: { type: 'emoji', value: '🎓' } },
+    { value: '2024',  label: 'Established',       icon: { type: 'emoji', value: '📅' } },
   ],
   about: {
-    subtitle: 'Who we are',
-    title: 'Your Voice on Campus',
+    subtitle: 'Who we are', title: 'Your Voice on Campus',
     body1: "The Haramaya University Students' Union is the official representative body of all students. We advocate for your rights, improve campus life, and bridge the gap between students and university administration.",
     body2: "Through our three main affairs — Academic, Discipline, and Service — we ensure every student's needs are heard and addressed.",
-    btnText: 'Learn More About Us',
-    btnLink: '/about',
+    btnText: 'Learn More About Us', btnLink: '/about',
   },
+  values: [
+    { icon: { type: 'emoji', value: '🎯' }, title: 'Mission-Driven', desc: 'Every action guided by student welfare and academic excellence.' },
+    { icon: { type: 'emoji', value: '🤝' }, title: 'Inclusive',      desc: 'Representing every student regardless of background.' },
+    { icon: { type: 'emoji', value: '⚡' }, title: 'Empowering',     desc: 'Giving students the tools and voice to succeed.' },
+    { icon: { type: 'emoji', value: '🏆' }, title: 'Excellence',     desc: 'Upholding the highest standards in all we do.' },
+  ],
+  aboutPage: {
+    heroSub:   'Who we are',
+    heroTitle: 'About the Union',
+    heroDesc:  "The Haramaya University Students' Union is the official representative body of all students — dedicated to academic excellence, student welfare, and community development.",
+    heroStats: [
+      { value: '2024', label: 'Established' },
+      { value: '3',    label: 'Main Affairs' },
+      { value: '5',    label: 'Leaders' },
+      { value: '1K+',  label: 'Students' },
+    ],
+  },
+  mvItems: [
+    { icon: { type: 'emoji', value: '🎯' }, label: 'Mission', title: 'Our Mission', color: '#1a3a6b', text: "To represent, advocate, and serve the interests of all Haramaya University students by fostering academic excellence, promoting student welfare, and building a united and inclusive campus community." },
+    { icon: { type: 'emoji', value: '🌟' }, label: 'Vision',  title: 'Our Vision',  color: '#e8a020', text: "To be a leading students' union in Ethiopia that empowers students to reach their full potential, contributes to national development, and upholds the values of integrity, unity, and excellence." },
+    { icon: { type: 'emoji', value: '💎' }, label: 'Values',  title: 'Our Values',  color: '#059669', text: "Integrity, transparency, inclusivity, academic excellence, student empowerment, and community service are the core values that guide everything we do." },
+  ],
   banner: {
     enabled: true,
     text: 'Cultural Diversity Festival is coming May 10',
@@ -88,6 +111,30 @@ export default function ManageSiteSettings() {
       const stats = [...prev.stats]
       stats[i] = { ...stats[i], [field]: value }
       return { ...prev, stats }
+    })
+  }
+
+  const setValueCard = (i, field, value) => {
+    setData(prev => {
+      const values = [...(prev.values || [])]
+      values[i] = { ...values[i], [field]: value }
+      return { ...prev, values }
+    })
+  }
+
+  const setAboutStat = (i, field, value) => {
+    setData(prev => {
+      const heroStats = [...(prev.aboutPage?.heroStats || [])]
+      heroStats[i] = { ...heroStats[i], [field]: value }
+      return { ...prev, aboutPage: { ...prev.aboutPage, heroStats } }
+    })
+  }
+
+  const setMvItem = (i, field, value) => {
+    setData(prev => {
+      const mvItems = [...(prev.mvItems || [])]
+      mvItems[i] = { ...mvItems[i], [field]: value }
+      return { ...prev, mvItems }
     })
   }
 
@@ -178,9 +225,12 @@ export default function ManageSiteSettings() {
             {data.stats.map((s, i) => (
               <div key={i} className="ss-stat-row">
                 <span className="ss-stat-num">#{i + 1}</span>
-                <div className="db-field" style={{ flex: 1 }}>
-                  <label>Icon (emoji)</label>
-                  <input value={s.icon} onChange={e => setStat(i, 'icon', e.target.value)} style={{ fontSize: '1.3rem' }} />
+                <div className="db-field" style={{ flex: 0.8 }}>
+                  <IconPicker
+                    value={s.icon}
+                    onChange={v => setStat(i, 'icon', v)}
+                    label="Icon"
+                  />
                 </div>
                 <div className="db-field" style={{ flex: 1 }}>
                   <label>Value</label>
@@ -230,6 +280,105 @@ export default function ManageSiteSettings() {
           </div>
         )}
 
+        {/* ── VALUES (Home page cards) ── */}
+        {activeTab === 'values' && (
+          <div className="db-form">
+            <h3 className="ss-section-title">Home Page — Value Cards</h3>
+            {(data.values || []).map((v, i) => (
+              <div key={i} className="ss-stat-row" style={{ alignItems: 'flex-start' }}>
+                <span className="ss-stat-num">#{i + 1}</span>
+                <div className="db-field" style={{ flex: 0.8 }}>
+                  <IconPicker
+                    value={v.icon}
+                    onChange={val => setValueCard(i, 'icon', val)}
+                    label="Icon"
+                  />
+                </div>
+                <div className="db-field" style={{ flex: 1 }}>
+                  <label>Title</label>
+                  <input value={v.title} onChange={e => setValueCard(i, 'title', e.target.value)} />
+                </div>
+                <div className="db-field" style={{ flex: 2 }}>
+                  <label>Description</label>
+                  <input value={v.desc} onChange={e => setValueCard(i, 'desc', e.target.value)} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── ABOUT PAGE ── */}
+        {activeTab === 'aboutPage' && (
+          <div className="db-form">
+            <h3 className="ss-section-title">About Page — Hero Section</h3>
+            <div className="db-form-row">
+              <div className="db-field">
+                <label>Small subtitle</label>
+                <input value={data.aboutPage?.heroSub || ''} onChange={e => set('aboutPage', 'heroSub', e.target.value)} />
+              </div>
+              <div className="db-field">
+                <label>Main title</label>
+                <input value={data.aboutPage?.heroTitle || ''} onChange={e => set('aboutPage', 'heroTitle', e.target.value)} />
+              </div>
+            </div>
+            <div className="db-field">
+              <label>Description paragraph</label>
+              <textarea value={data.aboutPage?.heroDesc || ''} onChange={e => set('aboutPage', 'heroDesc', e.target.value)} />
+            </div>
+            <h3 className="ss-section-title" style={{ marginTop: 24 }}>About Page — Hero Stats (4 boxes)</h3>
+            {(data.aboutPage?.heroStats || []).map((s, i) => (
+              <div key={i} className="ss-stat-row">
+                <span className="ss-stat-num">#{i + 1}</span>
+                <div className="db-field" style={{ flex: 1 }}>
+                  <label>Value</label>
+                  <input value={s.value} onChange={e => setAboutStat(i, 'value', e.target.value)} placeholder="e.g. 2024" />
+                </div>
+                <div className="db-field" style={{ flex: 2 }}>
+                  <label>Label</label>
+                  <input value={s.label} onChange={e => setAboutStat(i, 'label', e.target.value)} placeholder="e.g. Established" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── MISSION / VISION / VALUES ── */}
+        {activeTab === 'mvItems' && (
+          <div className="db-form">
+            <h3 className="ss-section-title">About Page — Mission, Vision & Values Cards</h3>
+            {(data.mvItems || []).map((item, i) => (
+              <div key={i} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: 16, border: '1px solid rgba(255,255,255,0.07)', marginBottom: 16 }}>
+                <p style={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 12 }}>Card #{i + 1}</p>
+                <div className="db-form-row" style={{ alignItems: 'flex-end' }}>
+                  <div className="db-field" style={{ flex: 0.7 }}>
+                    <IconPicker
+                      value={item.icon}
+                      onChange={v => setMvItem(i, 'icon', v)}
+                      label="Icon"
+                    />
+                  </div>
+                  <div className="db-field" style={{ flex: 0.7 }}>
+                    <label>Label (tab)</label>
+                    <input value={item.label} onChange={e => setMvItem(i, 'label', e.target.value)} placeholder="Mission" />
+                  </div>
+                  <div className="db-field" style={{ flex: 1 }}>
+                    <label>Title</label>
+                    <input value={item.title} onChange={e => setMvItem(i, 'title', e.target.value)} placeholder="Our Mission" />
+                  </div>
+                  <div className="db-field" style={{ flex: 0.4 }}>
+                    <label>Color</label>
+                    <input type="color" value={item.color} onChange={e => setMvItem(i, 'color', e.target.value)} style={{ height: 38, padding: 2, cursor: 'pointer', width: '100%' }} />
+                  </div>
+                </div>
+                <div className="db-field">
+                  <label>Text</label>
+                  <textarea value={item.text} onChange={e => setMvItem(i, 'text', e.target.value)} style={{ minHeight: 80 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── BANNER ── */}
         {activeTab === 'banner' && (
           <div className="db-form">
@@ -258,6 +407,42 @@ export default function ManageSiteSettings() {
                 <label>Link destination</label>
                 <input value={data.banner.linkHref} onChange={e => set('banner', 'linkHref', e.target.value)} placeholder="/events" />
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ACCESS CONTROL ── */}
+        {activeTab === 'access' && (
+          <div className="db-form">
+            <h3 className="ss-section-title">🔐 Access Control</h3>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 20, border: '1px solid rgba(255,255,255,0.07)', marginBottom: 16 }}>
+              <h4 style={{ color: '#fff', margin: '0 0 8px', fontSize: '0.95rem' }}>Member Signup</h4>
+              <div className="db-field">
+                <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={data.signupOpen || false}
+                    onChange={e => setData(prev => ({ ...prev, signupOpen: e.target.checked }))}
+                    style={{ width: 18, height: 18 }}
+                  />
+                  <div>
+                    <span style={{ fontWeight: 700, color: data.signupOpen ? '#22c55e' : 'rgba(255,255,255,0.5)', fontSize: '0.95rem' }}>
+                      {data.signupOpen ? '🟢 Signup is OPEN' : '🔴 Signup is CLOSED'}
+                    </span>
+                    <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: 'rgba(255,255,255,0.35)' }}>
+                      When open, a "Request Access" tab appears on the login page. New accounts require admin approval before getting dashboard access.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 20, border: '1px solid rgba(255,255,255,0.07)' }}>
+              <h4 style={{ color: '#fff', margin: '0 0 8px', fontSize: '0.95rem' }}>Pending Requests</h4>
+              <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                Review and approve pending signup requests in <strong style={{ color: '#e8a020' }}>Members → ⏳ Pending Approval</strong>.
+              </p>
             </div>
           </div>
         )}
