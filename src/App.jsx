@@ -127,8 +127,8 @@ export default function App() {
             }>
               <Route index element={<Overview />} />
               <Route path="site"    element={<ProtectedRoute allowedRoles={['admin']}><ManageSiteSettings /></ProtectedRoute>} />
-              <Route path="news"    element={<ProtectedRoute allowedRoles={['admin','news_org','affair_head','assoc_head']}><ManageNews /></ProtectedRoute>} />
-              <Route path="events"  element={<ProtectedRoute allowedRoles={['admin','events_org','affair_head','assoc_head']}><ManageEvents /></ProtectedRoute>} />
+              <Route path="news"    element={<ProtectedRoute allowedRoles={['admin','news_org','affair_head','assoc_head','president','vice_president','general_secretary','general_speaker','general_auditor']}><ManageNews /></ProtectedRoute>} />
+              <Route path="events"  element={<ProtectedRoute allowedRoles={['admin','events_org','affair_head','assoc_head','president','vice_president','general_secretary','general_speaker','general_auditor']}><ManageEvents /></ProtectedRoute>} />
               <Route path="affairs" element={<ProtectedRoute allowedRoles={['admin','affair_head','assoc_head']}><ManageAffairs /></ProtectedRoute>} />
               <Route path="team"    element={<ProtectedRoute allowedRoles={['admin']}><ManageTeam /></ProtectedRoute>} />
               <Route path="contact" element={<ProtectedRoute allowedRoles={['admin']}><ManageContact /></ProtectedRoute>} />

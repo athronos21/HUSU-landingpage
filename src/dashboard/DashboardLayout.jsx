@@ -27,7 +27,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const role = profile?.role || 'admin'
+  const role = profile?.role || ''
   const navItems = allNavItems.filter(n => (NAV_ACCESS[n.key] || []).includes(role))
 
   const handleLogout = async () => {
