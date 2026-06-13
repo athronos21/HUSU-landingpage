@@ -195,35 +195,55 @@ async function getAffairs(apiKey, projectId) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function uploadPhoto(fileId, botToken) {
-  // 1. Get the file path from Telegram
-  const fileRes  = await fetch(`${TG_BASE}${botToken}/getFile?file_id=${fileId}`)
-  const fileData = await fileRes.json()
-  if (!fileData.ok) return null
+  try {
+    // 1. Get the file path from Telegram
+    const fileRes  = await fetch(`${TG_BASE}${botToken}/getFile?file_id=${fileId}`)
+    const fileData = await fileRes.json()
+    if (!fileData.ok) {
+      console.error('❌ Telegram getFile failed:', fileData)
+      return null
+    }
 
-  // 2. Download the image bytes from Telegram (the URL contains the bot token,
-  //    so Cloudinary cannot fetch it directly — we must proxy it through the Worker)
-  const fileUrl  = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
-  const imgRes   = await fetch(fileUrl)
-  if (!imgRes.ok) return null
+    // 2. Download the image bytes from Telegram (the URL contains the bot token,
+    //    so Cloudinary cannot fetch it directly — we must proxy it through the Worker)
+    const fileUrl  = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
+    const imgRes   = await fetch(fileUrl)
+    if (!imgRes.ok) {
+      console.error('❌ Telegram file download failed:', imgRes.status)
+      return null
+    }
 
-  // 3. Convert to base64 and upload to Cloudinary as a data URI
-  const arrayBuf = await imgRes.arrayBuffer()
-  const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)))
-  const dataUri  = `data:image/jpeg;base64,${base64}`
+    // 3. Convert to base64 and upload to Cloudinary as a data URI
+    const arrayBuf = await imgRes.arrayBuffer()
+    const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)))
+    const dataUri  = `data:image/jpeg;base64,${base64}`
 
-  const params = new URLSearchParams({
-    file:          dataUri,
-    upload_preset: 'i0ysxxhc',
-    folder:        'telegram',
-  })
-  const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    params.toString(),
-  })
-  if (!upRes.ok) return null
-  const upData = await upRes.json()
-  return upData.secure_url || null
+    console.log('📤 Uploading to Cloudinary, size:', base64.length, 'bytes')
+
+    const params = new URLSearchParams({
+      file:          dataUri,
+      upload_preset: 'i0ysxxhc',
+      folder:        'telegram',
+    })
+    const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    params.toString(),
+    })
+    
+    const upData = await upRes.json()
+    
+    if (!upRes.ok) {
+      console.error('❌ Cloudinary upload failed:', upRes.status, upData)
+      return null
+    }
+    
+    console.log('✅ Cloudinary upload success:', upData.secure_url)
+    return upData.secure_url || null
+  } catch (err) {
+    console.error('❌ Upload photo error:', err.message)
+    return null
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -417,9 +437,22 @@ async function handleBotMessage(msg, env) {
       // Photo received
       if (photo && photo.length > 0) {
         const fileId  = photo[photo.length - 1].file_id
-        const imgUrl  = await uploadPhoto(fileId, env.BOT_TOKEN).catch(() => null)
+        console.log('📸 Attempting to upload photo, fileId:', fileId)
+        const imgUrl  = await uploadPhoto(fileId, env.BOT_TOKEN).catch(err => {
+          console.error('❌ Upload photo exception:', err)
+          return null
+        })
+        console.log('📸 Upload result:', imgUrl ? 'SUCCESS' : 'FAILED')
         d.image = imgUrl || ''
         d.photoFileId = fileId  // keep for forwarding
+        
+        if (!imgUrl) {
+          await sendMessage(chatId,
+            '⚠️ Photo upload failed. Continuing without image...',
+            keyboard([]),
+            env.BOT_TOKEN
+          )
+        }
       }
       // Skip or photo received — show preview
       d.date = new Date().toISOString().split('T')[0]
@@ -465,6 +498,7 @@ async function handleBotMessage(msg, env) {
           }
 
           // Save to Firestore
+          console.log('💾 Saving to Firestore, image:', d.image ? 'YES' : 'NO', d.image)
           await writeToFirestore('news', {
             title:       d.title,
             category:    d.category,
@@ -588,9 +622,22 @@ async function handleBotMessage(msg, env) {
     if (state.step === 'photo') {
       if (photo && photo.length > 0) {
         const fileId = photo[photo.length - 1].file_id
-        const imgUrl = await uploadPhoto(fileId, env.BOT_TOKEN).catch(() => null)
+        console.log('📸 [Event] Attempting photo upload, fileId:', fileId)
+        const imgUrl = await uploadPhoto(fileId, env.BOT_TOKEN).catch(err => {
+          console.error('❌ [Event] Upload exception:', err)
+          return null
+        })
+        console.log('📸 [Event] Upload result:', imgUrl ? 'SUCCESS' : 'FAILED')
         d.image = imgUrl || ''
         d.photoFileId = fileId
+        
+        if (!imgUrl) {
+          await sendMessage(chatId,
+            '⚠️ Photo upload failed. Continuing without image...',
+            keyboard([]),
+            env.BOT_TOKEN
+          )
+        }
       }
       await setState(kv, uid, { flow: 'event', step: 'confirm', data: d })
       const preview = eventPreview(d)
@@ -726,28 +773,51 @@ function parseEventText(text) {
 }
 
 async function uploadPhotoFromFileId(fileId, botToken) {
-  const fileRes  = await fetch(`${TG_BASE}${botToken}/getFile?file_id=${fileId}`)
-  const fileData = await fileRes.json()
-  if (!fileData.ok) return null
-  const fileUrl  = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
-  const imgRes   = await fetch(fileUrl)
-  if (!imgRes.ok) return null
-  const arrayBuf = await imgRes.arrayBuffer()
-  const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)))
-  const dataUri  = `data:image/jpeg;base64,${base64}`
-  const params = new URLSearchParams({
-    file:          dataUri,
-    upload_preset: 'i0ysxxhc',
-    folder:        'telegram',
-  })
-  const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body:    params.toString(),
-  })
-  if (!upRes.ok) return null
-  const upData = await upRes.json()
-  return upData.secure_url || null
+  try {
+    const fileRes  = await fetch(`${TG_BASE}${botToken}/getFile?file_id=${fileId}`)
+    const fileData = await fileRes.json()
+    if (!fileData.ok) {
+      console.error('❌ [uploadPhotoFromFileId] Telegram getFile failed:', fileData)
+      return null
+    }
+    
+    const fileUrl  = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
+    const imgRes   = await fetch(fileUrl)
+    if (!imgRes.ok) {
+      console.error('❌ [uploadPhotoFromFileId] File download failed:', imgRes.status)
+      return null
+    }
+    
+    const arrayBuf = await imgRes.arrayBuffer()
+    const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)))
+    const dataUri  = `data:image/jpeg;base64,${base64}`
+    
+    console.log('📤 [uploadPhotoFromFileId] Uploading, size:', base64.length)
+    
+    const params = new URLSearchParams({
+      file:          dataUri,
+      upload_preset: 'i0ysxxhc',
+      folder:        'telegram',
+    })
+    const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    params.toString(),
+    })
+    
+    const upData = await upRes.json()
+    
+    if (!upRes.ok) {
+      console.error('❌ [uploadPhotoFromFileId] Cloudinary failed:', upRes.status, upData)
+      return null
+    }
+    
+    console.log('✅ [uploadPhotoFromFileId] Success:', upData.secure_url)
+    return upData.secure_url || null
+  } catch (err) {
+    console.error('❌ [uploadPhotoFromFileId] Error:', err.message)
+    return null
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

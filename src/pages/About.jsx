@@ -52,13 +52,13 @@ export default function About() {
           </div>
           <div className="about-hero-card">
             {heroStats.map((s, i) => (
-              <>
-                {i > 0 && <div key={`sep-${i}`} className="ahc-sep" />}
-                <div key={i} className="ahc-stat">
+              <div key={`stat-${i}`} style={{ display: 'contents' }}>
+                {i > 0 && <div className="ahc-sep" />}
+                <div className="ahc-stat">
                   <strong>{s.value}</strong>
                   <span>{s.label}</span>
                 </div>
-              </>
+              </div>
             ))}
           </div>
         </div>
