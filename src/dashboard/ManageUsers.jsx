@@ -69,13 +69,15 @@ export default function ManageUsers() {
         await updateDoc(doc(db, 'affairs', form.affairId), { [field]: approveModal.id })
       }
 
-      // Send welcome letter
-      await sendSystemLetter({
-        toUid: approveModal.id,
-        toName: approveModal.name,
-        subject: 'Welcome to HUSU — Your account has been approved',
-        body: `Dear ${approveModal.name},\n\nYour account has been approved by the administrator. You have been assigned the role of ${ROLE_LABELS[form.role] || form.role}${form.affairName ? ` for ${form.affairName}` : ''}.\n\nPlease log in and complete your profile.\n\nWelcome!\nHUSU Administration`,
-      })
+      // Send welcome letter — non-fatal if it fails
+      try {
+        await sendSystemLetter({
+          toUid:   approveModal.id,
+          toName:  approveModal.name,
+          subject: 'Welcome to HUSU — Your account has been approved',
+          body:    `Dear ${approveModal.name},\n\nYour account has been approved by the administrator. You have been assigned the role of ${ROLE_LABELS[form.role] || form.role}${form.affairName ? ` for ${form.affairName}` : ''}.\n\nPlease log in and complete your profile.\n\nWelcome!\nHUSU Administration`,
+        })
+      } catch { /* letter failure should not block approval */ }
 
       setApproveModal(null)
     } catch (err) {
