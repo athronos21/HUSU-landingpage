@@ -131,6 +131,30 @@
   transform: translateY(-4px);
 }
 
+/* Event card image — spans full width on top */
+.ec-image {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-height: 240px;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.ec-image img {
+  width: 100%;
+  height: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+.event-card:hover .ec-image img { transform: scale(1.03); }
+
+.ec-posted-by {
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.28);
+  margin-top: 2px;
+}
+
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }

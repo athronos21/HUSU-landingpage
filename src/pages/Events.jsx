@@ -110,6 +110,11 @@ export default function Events() {
                   const cat  = categoryStyles[event.category] || categoryStyles.Academic
                   return (
                     <article key={event.id} className="event-card">
+                      {event.image && (
+                        <div className="ec-image">
+                          <img src={event.image} alt={event.title} loading="lazy" />
+                        </div>
+                      )}
                       <div className="ec-date-block">
                         <span className="ec-day">{date.day}</span>
                         <span className="ec-month">{date.month}</span>
@@ -131,19 +136,24 @@ export default function Events() {
                         <h3>{event.title}</h3>
                         <p className="ec-desc">{event.description}</p>
                         <div className="ec-details">
-                          <span className="ec-detail">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            {event.time}
-                          </span>
-                          <span className="ec-detail">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                            </svg>
-                            {event.location}
-                          </span>
+                          {event.time && (
+                            <span className="ec-detail">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                              </svg>
+                              {event.time}
+                            </span>
+                          )}
+                          {event.location && (
+                            <span className="ec-detail">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              {event.location}
+                            </span>
+                          )}
                         </div>
+                        {event.postedBy && <p className="ec-posted-by">Posted by {event.postedBy}</p>}
                       </div>
                       <div className="ec-accent" />
                     </article>
@@ -166,6 +176,11 @@ export default function Events() {
                   const cat  = categoryStyles[event.category] || categoryStyles.Academic
                   return (
                     <article key={event.id} className="event-card past-card">
+                      {event.image && (
+                        <div className="ec-image">
+                          <img src={event.image} alt={event.title} loading="lazy" />
+                        </div>
+                      )}
                       <div className="ec-date-block">
                         <span className="ec-day">{date.day}</span>
                         <span className="ec-month">{date.month}</span>
@@ -187,19 +202,24 @@ export default function Events() {
                         <h3>{event.title}</h3>
                         <p className="ec-desc">{event.description}</p>
                         <div className="ec-details">
-                          <span className="ec-detail">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            {event.time}
-                          </span>
-                          <span className="ec-detail">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                            </svg>
-                            {event.location}
-                          </span>
+                          {event.time && (
+                            <span className="ec-detail">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                              </svg>
+                              {event.time}
+                            </span>
+                          )}
+                          {event.location && (
+                            <span className="ec-detail">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              {event.location}
+                            </span>
+                          )}
                         </div>
+                        {event.postedBy && <p className="ec-posted-by">Posted by {event.postedBy}</p>}
                       </div>
                       <div className="ec-accent" />
                     </article>

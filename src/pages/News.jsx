@@ -132,6 +132,11 @@ export default function News() {
                 const cat = categoryColors[item.category] || categoryColors.Announcement
                 return (
                   <article key={item.id} className="news-card">
+                    {item.image && (
+                      <div className="nc-image">
+                        <img src={item.image} alt={item.title} loading="lazy" />
+                      </div>
+                    )}
                     <div className="nc-index">{String(i + 1).padStart(2, '0')}</div>
                     <div className="nc-body">
                       <div className="nc-meta">
@@ -148,6 +153,9 @@ export default function News() {
                       </div>
                       <h3>{item.title}</h3>
                       <p>{item.summary}</p>
+                      {item.postedBy && (
+                        <p className="nc-posted-by">Posted by {item.postedBy}</p>
+                      )}
                     </div>
                     <div className="nc-accent" />
                   </article>
