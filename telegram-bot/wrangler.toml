@@ -7,7 +7,7 @@ compatibility_date = "2024-01-01"
 # Then replace the id below with the one returned
 [[kv_namespaces]]
 binding = "BOT_STATE"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "ae1c6c0bd51d42c1a14c0fecfa8113bd"
 
 # Environment variables are set in Cloudflare dashboard as Secrets
 # DO NOT put secrets here — use `wrangler secret put` or the dashboard
