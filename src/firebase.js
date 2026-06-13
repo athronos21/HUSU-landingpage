@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth } from 'firebase/auth'
+import { getAuth, browserSessionPersistence, setPersistence } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
@@ -24,4 +24,11 @@ export const auth          = getAuth(app)
 export const secondaryAuth = getAuth(secondaryApp)
 export const db            = getFirestore(app)
 export const storage       = getStorage(app)
+
+// Use SESSION storage instead of LOCAL storage so each browser tab
+// has its own independent auth session. This means:
+//   - User A on Tab 1 and User B on Tab 2 don't interfere with each other
+//   - Closing a tab signs that user out (no persistent session across restarts)
+setPersistence(auth, browserSessionPersistence).catch(console.error)
+
 export default app
