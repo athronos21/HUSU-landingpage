@@ -195,18 +195,32 @@ async function getAffairs(apiKey, projectId) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function uploadPhoto(fileId, botToken) {
+  // 1. Get the file path from Telegram
   const fileRes  = await fetch(`${TG_BASE}${botToken}/getFile?file_id=${fileId}`)
   const fileData = await fileRes.json()
   if (!fileData.ok) return null
-  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
-  const imgRes  = await fetch(fileUrl)
+
+  // 2. Download the image bytes from Telegram (the URL contains the bot token,
+  //    so Cloudinary cannot fetch it directly — we must proxy it through the Worker)
+  const fileUrl  = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
+  const imgRes   = await fetch(fileUrl)
   if (!imgRes.ok) return null
-  const imgBlob = await imgRes.blob()
-  const fd = new FormData()
-  fd.append('file', imgBlob, 'photo.jpg')
-  fd.append('upload_preset', 'i0ysxxhc')
-  fd.append('folder', 'telegram')
-  const upRes  = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', { method: 'POST', body: fd })
+
+  // 3. Convert to base64 and upload to Cloudinary as a data URI
+  const arrayBuf = await imgRes.arrayBuffer()
+  const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)))
+  const dataUri  = `data:image/jpeg;base64,${base64}`
+
+  const params = new URLSearchParams({
+    file:          dataUri,
+    upload_preset: 'i0ysxxhc',
+    folder:        'telegram',
+  })
+  const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:    params.toString(),
+  })
   if (!upRes.ok) return null
   const upData = await upRes.json()
   return upData.secure_url || null
@@ -715,15 +729,22 @@ async function uploadPhotoFromFileId(fileId, botToken) {
   const fileRes  = await fetch(`${TG_BASE}${botToken}/getFile?file_id=${fileId}`)
   const fileData = await fileRes.json()
   if (!fileData.ok) return null
-  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
-  const imgRes  = await fetch(fileUrl)
+  const fileUrl  = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
+  const imgRes   = await fetch(fileUrl)
   if (!imgRes.ok) return null
-  const imgBlob = await imgRes.blob()
-  const fd = new FormData()
-  fd.append('file', imgBlob, 'photo.jpg')
-  fd.append('upload_preset', 'i0ysxxhc')
-  fd.append('folder', 'telegram')
-  const upRes  = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', { method: 'POST', body: fd })
+  const arrayBuf = await imgRes.arrayBuffer()
+  const base64   = btoa(String.fromCharCode(...new Uint8Array(arrayBuf)))
+  const dataUri  = `data:image/jpeg;base64,${base64}`
+  const params = new URLSearchParams({
+    file:          dataUri,
+    upload_preset: 'i0ysxxhc',
+    folder:        'telegram',
+  })
+  const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:    params.toString(),
+  })
   if (!upRes.ok) return null
   const upData = await upRes.json()
   return upData.secure_url || null
