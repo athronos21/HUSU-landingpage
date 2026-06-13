@@ -81,7 +81,7 @@ export const NAV_ACCESS = {
   contact:   ['admin'],
   users:     ['admin'],
   elections: ['admin'],
-  vote:      [...DASHBOARD_ROLES, 'member'],
+  vote:      ['admin'],
   letters:   [...COMMS_ROLES, 'member'],
   messages:  [...COMMS_ROLES],
   profile:   [...DASHBOARD_ROLES, 'member'],

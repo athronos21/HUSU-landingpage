@@ -103,12 +103,29 @@ async function writeToFirestore(collection, data, apiKey, projectId) {
   return res.json()
 }
 
-// ── Write user profile to Firestore (PATCH by UID) ─────────────────
-async function writeUserProfile(uid, profile, apiKey, projectId) {
+// ── Sign in to Firebase and get an ID token ───────────────────────
+async function signInFirebase(email, password, apiKey) {
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+    }
+  )
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error?.message || 'Sign-in failed')
+  return { idToken: data.idToken, uid: data.localId }
+}
+
+// ── Write user profile to Firestore (PATCH by UID) with auth token ─
+async function writeUserProfile(uid, profile, apiKey, projectId, idToken) {
   const url = `${FIRESTORE_BASE}/projects/${projectId}/databases/(default)/documents/users/${uid}?key=${apiKey}`
+  const headers = { 'Content-Type': 'application/json' }
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`
   const res = await fetch(url, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ fields: toFirestoreFields(profile) }),
   })
   if (!res.ok) {
@@ -149,11 +166,15 @@ async function createFirebaseUser(email, password, apiKey) {
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, returnSecureToken: false }),
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
     }
   )
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error?.message || 'Failed to create user')
+  if (!res.ok) {
+    const code = data.error?.message || 'UNKNOWN_ERROR'
+    throw new Error(code)
+  }
+  if (!data.localId) throw new Error('No localId returned from Firebase')
   return data.localId
 }
 
@@ -188,7 +209,7 @@ async function handleCreateUser(request, env) {
   try {
     uid = await createFirebaseUser(email, password, env.FIREBASE_API_KEY)
   } catch (e) {
-    if (e.message === 'EMAIL_EXISTS') {
+    if (e.message.includes('EMAIL_EXISTS')) {
       return new Response(JSON.stringify({
         error: 'EMAIL_EXISTS',
         message: 'This email already has a login account. Use the Users page in the dashboard to update their role and assign this affair.',
@@ -203,6 +224,16 @@ async function handleCreateUser(request, env) {
     })
   }
 
+  // Sign in as the new user to get an ID token for authenticated Firestore write
+  let idToken
+  try {
+    const signIn = await signInFirebase(email, password, env.FIREBASE_API_KEY)
+    idToken = signIn.idToken
+  } catch (e) {
+    // Non-fatal: try writing without auth (will fail if rules require auth)
+    idToken = null
+  }
+
   try {
     await writeUserProfile(uid, {
       name,
@@ -210,9 +241,10 @@ async function handleCreateUser(request, env) {
       role,
       affairId:           affairId   || '',
       affairName:         affairName || '',
+      status:             'active',
       mustChangePassword: 'true',
       createdAt:          new Date().toISOString(),
-    }, env.FIREBASE_API_KEY, env.PROJECT_ID)
+    }, env.FIREBASE_API_KEY, env.PROJECT_ID, idToken)
 
     return new Response(JSON.stringify({ success: true, uid, password }), {
       status: 200,

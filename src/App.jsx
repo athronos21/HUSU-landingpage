@@ -137,7 +137,7 @@ export default function App() {
               <Route path="letters"   element={<ProtectedRoute><Letters /></ProtectedRoute>} />
               <Route path="messages"  element={<ProtectedRoute><Messages /></ProtectedRoute>} />
               <Route path="elections" element={<ProtectedRoute allowedRoles={['admin']}><ManageElections /></ProtectedRoute>} />
-              <Route path="vote"      element={<ProtectedRoute><Vote /></ProtectedRoute>} />
+              <Route path="vote"      element={<ProtectedRoute allowedRoles={['admin']}><Vote /></ProtectedRoute>} />
             </Route>
 
             <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />

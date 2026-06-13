@@ -23,9 +23,9 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   // 4. Account pending approval
   if (profile.status === 'pending') return <Navigate to="/login" replace />
 
-  // 5. Role-based access — member only gets profile & vote
+  // 5. Role-based access — member only gets profile & letters
   if (profile.role === 'member' && allowedRoles && !allowedRoles.includes('member')) {
-    return <Navigate to="/dashboard/vote" replace />
+    return <Navigate to="/dashboard/profile" replace />
   }
 
   // 6. Specific role requirement not met
