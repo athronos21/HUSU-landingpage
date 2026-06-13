@@ -1,92 +1,91 @@
 import { useState } from 'react'
-import { useCollection, addDocument, updateDocument, deleteDocument } from '../hooks/useFirestore'
+import { deleteDocument, useCollection } from '../hooks/useFirestore'
 import { useAuth } from '../context/AuthContext'
-import { news as staticNews } from '../data/data'
 import './Dashboard.css'
 
 const CATEGORIES = ['Announcement', 'Academic', 'Service', 'Discipline']
 const catColors  = { Announcement: '#4a7fd4', Academic: '#10b981', Service: '#e8a020', Discipline: '#a78bfa' }
 
-const empty = { title: '', summary: '', category: 'Announcement', date: new Date().toISOString().split('T')[0], affair: '' }
+const TELEGRAM_NEWS_CHANNEL = 'HUSU_News'
 
 export default function ManageNews() {
   const { profile } = useAuth()
   const { docs, loading } = useCollection('news', 'date')
-  const [modal, setModal] = useState(false)
-  const [form, setForm]   = useState(empty)
-  const [editId, setEditId] = useState(null)
-  const [search, setSearch] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
+  const [search,  setSearch]  = useState('')
+  const [catFilter, setCatFilter] = useState('All')
 
-  const isAdmin     = profile?.role === 'admin'
-  const affairName  = profile?.affairName || ''
+  const isAdmin = profile?.role === 'admin'
 
-  // Non-admins can only edit/delete their own posts
-  const canModify = (item) => isAdmin || item.createdBy === profile?.email
-
-  const items    = docs.length > 0 ? docs : []
-  const filtered = items.filter(n =>
-    n.title?.toLowerCase().includes(search.toLowerCase()) ||
-    n.category?.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const openAdd  = () => {
-    setForm({ ...empty, affair: affairName })
-    setEditId(null); setError(''); setModal(true)
-  }
-  const openEdit = (item) => {
-    setForm({ title: item.title, summary: item.summary, category: item.category, date: item.date, affair: item.affair || '' })
-    setEditId(item.id); setError(''); setModal(true)
-  }
-  const closeModal = () => { setModal(false); setForm(empty); setEditId(null); setError('') }
-
-  const handleSave = async e => {
-    e.preventDefault()
-    if (!form.title || !form.summary || !form.date) { setError('All fields are required.'); return }
-    setSaving(true)
-    try {
-      const data = { ...form, createdBy: profile?.email || '' }
-      if (editId) await updateDocument('news', editId, data)
-      else         await addDocument('news', data)
-      closeModal()
-    } catch (err) {
-      setError('Failed to save. Please try again.')
-    } finally {
-      setSaving(false)
-    }
-  }
+  const filtered = docs.filter(n => {
+    const matchSearch = !search ||
+      n.title?.toLowerCase().includes(search.toLowerCase()) ||
+      n.summary?.toLowerCase().includes(search.toLowerCase()) ||
+      n.affair?.toLowerCase().includes(search.toLowerCase())
+    const matchCat = catFilter === 'All' || n.category === catFilter
+    return matchSearch && matchCat
+  })
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this news item?')) return
     await deleteDocument('news', id)
   }
 
-  const seedStatic = async () => {
-    if (!confirm('Seed all static news items into Firestore?')) return
-    for (const item of staticNews) {
-      await addDocument('news', { title: item.title, summary: item.summary, category: item.category, date: item.date, affair: '', createdBy: '' })
-    }
-  }
-
   return (
     <div className="dash-page">
       <div className="dash-page-header">
         <div>
-          <h1>📰 News Management</h1>
-          <p>Create, edit and delete news articles</p>
+          <h1>📰 News</h1>
+          <p>News is posted via the Telegram channel and appears here automatically.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {docs.length === 0 && (
-            <button className="db-btn db-btn-ghost" onClick={seedStatic}>⬆ Seed from static</button>
-          )}
-          <button className="db-btn db-btn-primary" onClick={openAdd}>+ Add News</button>
-        </div>
+        <a
+          href={`https://t.me/${TELEGRAM_NEWS_CHANNEL}`}
+          target="_blank"
+          rel="noreferrer"
+          className="db-btn db-btn-primary"
+          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          ✈️ Post on Telegram
+        </a>
       </div>
 
-      <div className="db-search-bar">
-        <input className="db-search-input" placeholder="Search news…" value={search} onChange={e => setSearch(e.target.value)} />
-        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)' }}>{filtered.length} items</span>
+      {/* How to post info box */}
+      <div style={{
+        background: 'rgba(74,127,212,0.08)', border: '1px solid rgba(74,127,212,0.2)',
+        borderRadius: 12, padding: '16px 20px', marginBottom: 24,
+        fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7,
+      }}>
+        <strong style={{ color: '#4a7fd4' }}>📋 How to post news:</strong> Open the Telegram channel and send a message in this format:
+        <pre style={{ margin: '10px 0 0', padding: '10px 14px', background: 'rgba(0,0,0,0.3)', borderRadius: 8, fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', overflowX: 'auto' }}>{`Title: Your news headline
+Category: Academic
+Affair: Academic
+
+Full description of the news here...`}</pre>
+        <p style={{ margin: '8px 0 0', fontSize: '0.78rem' }}>
+          Valid categories: <strong>Announcement · Academic · Service · Discipline</strong> &nbsp;|&nbsp;
+          Attach a photo to include an image. Affair heads post from the shared channel and tag their affair.
+        </p>
+      </div>
+
+      {/* Search + filter */}
+      <div className="db-search-bar" style={{ gap: 8, flexWrap: 'wrap' }}>
+        <input
+          className="db-search-input"
+          placeholder="Search news…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ flex: 1, minWidth: 180 }}
+        />
+        <select
+          value={catFilter}
+          onChange={e => setCatFilter(e.target.value)}
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', padding: '8px 12px', fontSize: '0.85rem' }}
+        >
+          <option value="All">All Categories</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', alignSelf: 'center' }}>
+          {filtered.length} item{filtered.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {loading ? (
@@ -98,83 +97,65 @@ export default function ManageNews() {
               <tr>
                 <th>Title</th>
                 <th>Category</th>
+                <th>Affair</th>
                 <th>Date</th>
-                <th>Actions</th>
+                <th>Source</th>
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.25)', padding: '32px' }}>No news found. Click "Add News" to create one.</td></tr>
+                <tr>
+                  <td colSpan={isAdmin ? 6 : 5} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.25)', padding: '40px' }}>
+                    No news yet. Post in the Telegram channel to publish news.
+                  </td>
+                </tr>
               )}
               {filtered.map(item => (
                 <tr key={item.id}>
-                  <td style={{ maxWidth: 320 }}>
+                  <td style={{ maxWidth: 300 }}>
                     <span style={{ color: '#fff', fontWeight: 600 }}>{item.title}</span>
-                    <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.38)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300 }}>{item.summary}</p>
+                    {item.image && <span style={{ marginLeft: 8, fontSize: '0.72rem', color: '#10b981' }}>📷</span>}
+                    <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.38)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280 }}>
+                      {item.summary}
+                    </p>
                   </td>
                   <td>
-                    <span className="db-tag" style={{ color: catColors[item.category] || '#4a7fd4' }}>{item.category}</span>
+                    <span className="db-tag" style={{ color: catColors[item.category] || '#4a7fd4' }}>
+                      {item.category}
+                    </span>
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{item.date}</td>
+                  <td style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                    {item.affair || '—'}
+                  </td>
+                  <td style={{ whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                    {item.date}
+                  </td>
                   <td>
-                    <div className="db-table-actions">
-                      {canModify(item) && (
-                        <button className="db-btn db-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => openEdit(item)}>Edit</button>
-                      )}
-                      {isAdmin && (
-                        <button className="db-btn db-btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDelete(item.id)}>Delete</button>
-                      )}
-                      {!canModify(item) && !isAdmin && (
-                        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)' }}>View only</span>
-                      )}
-                    </div>
+                    <span style={{
+                      fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                      background: item.source === 'telegram' ? 'rgba(42,163,239,0.12)' : 'rgba(255,255,255,0.06)',
+                      color: item.source === 'telegram' ? '#29a3ef' : 'rgba(255,255,255,0.4)',
+                      border: item.source === 'telegram' ? '1px solid rgba(42,163,239,0.25)' : '1px solid rgba(255,255,255,0.1)',
+                    }}>
+                      {item.source === 'telegram' ? '✈️ Telegram' : '🖊️ Manual'}
+                    </span>
                   </td>
+                  {isAdmin && (
+                    <td>
+                      <button
+                        className="db-btn db-btn-danger"
+                        style={{ padding: '5px 10px', fontSize: '0.78rem' }}
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {modal && (
-        <div className="db-modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
-          <div className="db-modal">
-            <button className="db-modal-close" onClick={closeModal}>✕</button>
-            <h2>{editId ? 'Edit News' : 'Add News'}</h2>
-            {error && <div className="db-error" style={{ marginBottom: 16 }}>{error}</div>}
-            <form onSubmit={handleSave} className="db-form">
-              <div className="db-field">
-                <label>Title *</label>
-                <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="News headline" />
-              </div>
-              <div className="db-field">
-                <label>Summary *</label>
-                <textarea value={form.summary} onChange={e => setForm(f => ({ ...f, summary: e.target.value }))} placeholder="Brief description of the news…" />
-              </div>
-              <div className="db-form-row">
-                <div className="db-field">
-                  <label>Category</label>
-                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="db-field">
-                  <label>Date *</label>
-                  <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
-                </div>
-              </div>
-              {!isAdmin && affairName && (
-                <div className="db-field">
-                  <label>Affair</label>
-                  <input value={form.affair} disabled style={{ opacity: 0.5 }} />
-                </div>
-              )}
-              <div className="db-form-actions">
-                <button type="button" className="db-btn db-btn-ghost" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="db-btn db-btn-primary" disabled={saving}>{saving ? 'Saving…' : (editId ? 'Update' : 'Publish')}</button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </div>

@@ -4,15 +4,40 @@
  * Endpoints:
  *   POST /            — Telegram webhook (channel posts → Firestore)
  *   POST /create-user — Create Firebase Auth account without session side-effects
+ *   GET  /health      — Liveness check
  *
- * Environment variables:
+ * Environment variables (set in Cloudflare Workers dashboard as Secrets):
  *   BOT_TOKEN        — Telegram bot token
  *   FIREBASE_API_KEY — Firebase Web API Key
- *   PROJECT_ID       — Firebase project ID
- *   NEWS_CHANNEL     — e.g. HUSU_News
- *   EVENTS_CHANNEL   — e.g. HUSU_Events
+ *   PROJECT_ID       — Firebase project ID (e.g. husu-f7abc)
+ *   NEWS_CHANNELS    — Comma-separated list of news channel usernames (without @)
+ *                      e.g. "HUSU_News,HUSU_Academic_News,HUSU_Discipline_News"
+ *   EVENTS_CHANNELS  — Comma-separated list of events channel usernames (without @)
+ *                      e.g. "HUSU_Events,HUSU_Academic_Events,HUSU_Service_Events"
  *   WEBHOOK_SECRET   — Secret token for Telegram webhook verification
  *   WORKER_SECRET    — Secret token for /create-user endpoint
+ *
+ * HOW AFFAIR HEADS POST:
+ *   Each affair head is added as admin to the shared channels OR their own channel.
+ *   They tag their post with "Affair: Academic" (or Discipline, Service etc).
+ *   The worker stores that tag in Firestore and the website filters by it.
+ *
+ * POST FORMAT (News):
+ *   Title: Your News Title
+ *   Category: Academic
+ *   Affair: Academic
+ *
+ *   Full description here...
+ *
+ * POST FORMAT (Events):
+ *   Title: Event Name
+ *   Date: 2026-07-15
+ *   Time: 9:00 AM - 1:00 PM
+ *   Location: HU Main Hall
+ *   Category: Workshop
+ *   Affair: Service
+ *
+ *   Full description here...
  */
 
 const FIRESTORE_BASE = 'https://firestore.googleapis.com/v1'
@@ -23,6 +48,7 @@ function parseNews(text) {
   const fields = {}
   let bodyLines = []
   let inBody = false
+
   for (const line of lines) {
     if (inBody) { bodyLines.push(line); continue }
     const m = line.match(/^([a-zA-Z][\w\s]*):\s*(.+)$/)
@@ -30,9 +56,11 @@ function parseNews(text) {
     else if (line.trim() === '') { inBody = true }
     else { bodyLines.push(line) }
   }
-  const rawCat = fields['category'] || fields['type'] || ''
+
+  const rawCat    = fields['category'] || fields['type'] || ''
   const validNews = ['Announcement', 'Academic', 'Service', 'Discipline']
-  const category = validNews.find(c => c.toLowerCase() === rawCat.toLowerCase()) || 'Announcement'
+  const category  = validNews.find(c => c.toLowerCase() === rawCat.toLowerCase()) || 'Announcement'
+
   return {
     title:     fields['title'] || fields['headline'] || 'Untitled',
     category,
@@ -50,6 +78,7 @@ function parseEvent(text) {
   const fields = {}
   let bodyLines = []
   let inBody = false
+
   for (const line of lines) {
     if (inBody) { bodyLines.push(line); continue }
     const m = line.match(/^([a-zA-Z][\w\s]*):\s*(.+)$/)
@@ -57,12 +86,16 @@ function parseEvent(text) {
     else if (line.trim() === '') { inBody = true }
     else { bodyLines.push(line) }
   }
-  const rawCat = fields['category'] || fields['type'] || ''
+
+  const rawCat      = fields['category'] || fields['type'] || ''
   const validEvents = ['Sports', 'Academic', 'Workshop', 'Culture']
-  const category = validEvents.find(c => c.toLowerCase() === rawCat.toLowerCase()) || 'Academic'
+  const category    = validEvents.find(c => c.toLowerCase() === rawCat.toLowerCase()) || 'Academic'
+
   let date = fields['date'] || new Date().toISOString().split('T')[0]
+  // Support DD/MM/YYYY and DD-MM-YYYY formats
   const dmyMatch = date.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
   if (dmyMatch) date = `${dmyMatch[3]}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}`
+
   return {
     title:       fields['title'] || fields['event'] || 'Untitled Event',
     date,
@@ -103,7 +136,7 @@ async function writeToFirestore(collection, data, apiKey, projectId) {
   return res.json()
 }
 
-// ── Sign in to Firebase and get an ID token ───────────────────────
+// ── Sign in to Firebase and get an ID token ────────────────────────
 async function signInFirebase(email, password, apiKey) {
   const res = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
@@ -224,7 +257,7 @@ async function handleCreateUser(request, env) {
     if (e.message.includes('EMAIL_EXISTS')) {
       return new Response(JSON.stringify({
         error: 'EMAIL_EXISTS',
-        message: 'This email already has a login account. Use the Users page in the dashboard to update their role and assign this affair.',
+        message: 'This email already has a login account. Use the Users page in the dashboard to update their role.',
       }), {
         status: 409,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
@@ -241,8 +274,7 @@ async function handleCreateUser(request, env) {
   try {
     const signIn = await signInFirebase(email, password, env.FIREBASE_API_KEY)
     idToken = signIn.idToken
-  } catch (e) {
-    // Non-fatal: try writing without auth (will fail if rules require auth)
+  } catch {
     idToken = null
   }
 
@@ -275,6 +307,12 @@ function normalizeChannel(id) {
   return String(id).replace('@', '').toLowerCase()
 }
 
+// ── Parse comma-separated channel list from env ───────────────────
+function parseChannels(envVal) {
+  if (!envVal) return []
+  return envVal.split(',').map(c => normalizeChannel(c.trim())).filter(Boolean)
+}
+
 // ── Main worker handler ────────────────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -284,14 +322,14 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin':  '*',
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, X-Worker-Secret',
         },
       })
     }
 
-    // Route: /health — liveness check
+    // Route: /health
     if (url.pathname === '/health') {
       return new Response(JSON.stringify({ ok: true, worker: 'husu-telegram-bot' }), {
         status: 200,
@@ -309,6 +347,7 @@ export default {
       return new Response('OK', { status: 200 })
     }
 
+    // Verify Telegram webhook secret
     const secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
     if (env.WEBHOOK_SECRET && secret !== env.WEBHOOK_SECRET) {
       return new Response('Unauthorized', { status: 401 })
@@ -322,18 +361,23 @@ export default {
     const msg = update.channel_post
     if (!msg) return new Response('OK', { status: 200 })
 
-    const chatId        = msg.chat?.username || String(msg.chat?.id)
-    const newsChannel   = normalizeChannel(env.NEWS_CHANNEL   || '')
-    const eventsChannel = normalizeChannel(env.EVENTS_CHANNEL || '')
-    const thisChan      = normalizeChannel(chatId)
+    // Identify the channel that posted
+    const chatId   = msg.chat?.username || String(msg.chat?.id)
+    const thisChan = normalizeChannel(chatId)
 
-    const isNews   = thisChan === newsChannel
-    const isEvents = thisChan === eventsChannel
+    // Support multiple channels per type (comma-separated in env)
+    const newsChannels   = parseChannels(env.NEWS_CHANNELS   || env.NEWS_CHANNEL   || '')
+    const eventsChannels = parseChannels(env.EVENTS_CHANNELS || env.EVENTS_CHANNEL || '')
+
+    const isNews   = newsChannels.includes(thisChan)
+    const isEvents = eventsChannels.includes(thisChan)
+
     if (!isNews && !isEvents) return new Response('OK', { status: 200 })
 
     const text = msg.text || msg.caption || ''
     if (!text.trim()) return new Response('OK', { status: 200 })
 
+    // Upload photo if attached
     let imageUrl = null
     if (msg.photo && msg.photo.length > 0) {
       const largest = msg.photo[msg.photo.length - 1]
@@ -345,12 +389,12 @@ export default {
         const data = parseNews(text)
         if (imageUrl) data.image = imageUrl
         await writeToFirestore('news', data, env.FIREBASE_API_KEY, env.PROJECT_ID)
-        console.log('✅ News written:', data.title)
+        console.log('✅ News written:', data.title, '| Affair:', data.affair || 'none')
       } else if (isEvents) {
         const data = parseEvent(text)
         if (imageUrl) data.image = imageUrl
         await writeToFirestore('events', data, env.FIREBASE_API_KEY, env.PROJECT_ID)
-        console.log('✅ Event written:', data.title)
+        console.log('✅ Event written:', data.title, '| Affair:', data.affair || 'none')
       }
     } catch (e) {
       console.error('❌ Firestore error:', e.message)

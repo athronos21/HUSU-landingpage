@@ -1,94 +1,98 @@
 import { useState } from 'react'
-import { useCollection, addDocument, updateDocument, deleteDocument } from '../hooks/useFirestore'
+import { deleteDocument, useCollection } from '../hooks/useFirestore'
 import { useAuth } from '../context/AuthContext'
-import { events as staticEvents } from '../data/data'
 import './Dashboard.css'
 
 const CATEGORIES = ['Sports', 'Academic', 'Workshop', 'Culture']
 const catColors  = { Sports: '#10b981', Academic: '#4a7fd4', Workshop: '#a78bfa', Culture: '#e8a020' }
 
-const empty = {
-  title: '', description: '', category: 'Academic',
-  date: new Date().toISOString().split('T')[0],
-  time: '', location: '', affair: '',
+const TELEGRAM_EVENTS_CHANNEL = 'HUSU_Events'
+
+function isPast(dateStr) {
+  return new Date(dateStr) < new Date()
 }
 
 export default function ManageEvents() {
   const { profile } = useAuth()
   const { docs, loading } = useCollection('events', 'date')
-  const [modal, setModal]   = useState(false)
-  const [form, setForm]     = useState(empty)
-  const [editId, setEditId] = useState(null)
-  const [search, setSearch] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
+  const [search,    setSearch]    = useState('')
+  const [catFilter, setCatFilter] = useState('All')
 
-  const isAdmin    = profile?.role === 'admin'
-  const affairName = profile?.affairName || ''
+  const isAdmin = profile?.role === 'admin'
 
-  const canModify = (item) => isAdmin || item.createdBy === profile?.email
-
-  const filtered = docs.filter(e =>
-    e.title?.toLowerCase().includes(search.toLowerCase()) ||
-    e.category?.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const openAdd  = () => {
-    setForm({ ...empty, affair: affairName })
-    setEditId(null); setError(''); setModal(true)
-  }
-  const openEdit = (item) => {
-    setForm({ title: item.title, description: item.description, category: item.category, date: item.date, time: item.time || '', location: item.location || '', affair: item.affair || '' })
-    setEditId(item.id); setError(''); setModal(true)
-  }
-  const closeModal = () => { setModal(false); setForm(empty); setEditId(null); setError('') }
-
-  const handleSave = async e => {
-    e.preventDefault()
-    if (!form.title || !form.date) { setError('Title and date are required.'); return }
-    setSaving(true)
-    try {
-      const data = { ...form, createdBy: profile?.email || '' }
-      if (editId) await updateDocument('events', editId, data)
-      else         await addDocument('events', data)
-      closeModal()
-    } catch {
-      setError('Failed to save. Please try again.')
-    } finally {
-      setSaving(false)
-    }
-  }
+  const filtered = docs.filter(e => {
+    const matchSearch = !search ||
+      e.title?.toLowerCase().includes(search.toLowerCase()) ||
+      e.description?.toLowerCase().includes(search.toLowerCase()) ||
+      e.affair?.toLowerCase().includes(search.toLowerCase())
+    const matchCat = catFilter === 'All' || e.category === catFilter
+    return matchSearch && matchCat
+  })
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this event?')) return
     await deleteDocument('events', id)
   }
 
-  const seedStatic = async () => {
-    if (!confirm('Seed all static events into Firestore?')) return
-    for (const item of staticEvents) {
-      await addDocument('events', { title: item.title, description: item.description, category: item.category, date: item.date, time: item.time, location: item.location, affair: '', createdBy: '' })
-    }
-  }
-
   return (
     <div className="dash-page">
       <div className="dash-page-header">
         <div>
-          <h1>📅 Events Management</h1>
-          <p>Create, edit and delete events</p>
+          <h1>📅 Events</h1>
+          <p>Events are posted via the Telegram channel and appear here automatically.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {docs.length === 0 && (
-            <button className="db-btn db-btn-ghost" onClick={seedStatic}>⬆ Seed from static</button>
-          )}
-          <button className="db-btn db-btn-primary" onClick={openAdd}>+ Add Event</button>
-        </div>
+        <a
+          href={`https://t.me/${TELEGRAM_EVENTS_CHANNEL}`}
+          target="_blank"
+          rel="noreferrer"
+          className="db-btn db-btn-primary"
+          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          ✈️ Post on Telegram
+        </a>
       </div>
 
-      <div className="db-search-bar">
-        <input className="db-search-input" placeholder="Search events…" value={search} onChange={e => setSearch(e.target.value)} />
-        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)' }}>{filtered.length} items</span>
+      {/* How to post info box */}
+      <div style={{
+        background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)',
+        borderRadius: 12, padding: '16px 20px', marginBottom: 24,
+        fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7,
+      }}>
+        <strong style={{ color: '#10b981' }}>📋 How to post events:</strong> Open the Telegram channel and send a message in this format:
+        <pre style={{ margin: '10px 0 0', padding: '10px 14px', background: 'rgba(0,0,0,0.3)', borderRadius: 8, fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)', overflowX: 'auto' }}>{`Title: Event Name
+Date: 2026-07-15
+Time: 9:00 AM - 1:00 PM
+Location: HU Main Hall
+Category: Workshop
+Affair: Service
+
+Full description of the event here...`}</pre>
+        <p style={{ margin: '8px 0 0', fontSize: '0.78rem' }}>
+          Valid categories: <strong>Sports · Academic · Workshop · Culture</strong> &nbsp;|&nbsp;
+          Date format: <strong>YYYY-MM-DD</strong>. Attach a photo to include an image.
+        </p>
+      </div>
+
+      {/* Search + filter */}
+      <div className="db-search-bar" style={{ gap: 8, flexWrap: 'wrap' }}>
+        <input
+          className="db-search-input"
+          placeholder="Search events…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ flex: 1, minWidth: 180 }}
+        />
+        <select
+          value={catFilter}
+          onChange={e => setCatFilter(e.target.value)}
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', padding: '8px 12px', fontSize: '0.85rem' }}
+        >
+          <option value="All">All Categories</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', alignSelf: 'center' }}>
+          {filtered.length} item{filtered.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {loading ? (
@@ -100,88 +104,69 @@ export default function ManageEvents() {
               <tr>
                 <th>Title</th>
                 <th>Category</th>
+                <th>Affair</th>
                 <th>Date</th>
                 <th>Location</th>
-                <th>Actions</th>
+                <th>Status</th>
+                {isAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.25)', padding: '32px' }}>No events found. Click "Add Event" to create one.</td></tr>
-              )}
-              {filtered.map(item => (
-                <tr key={item.id}>
-                  <td>
-                    <span style={{ color: '#fff', fontWeight: 600 }}>{item.title}</span>
-                  </td>
-                  <td>
-                    <span className="db-tag" style={{ color: catColors[item.category] || '#4a7fd4' }}>{item.category}</span>
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{item.date}</td>
-                  <td style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.45)', maxWidth: 180 }}>{item.location}</td>
-                  <td>
-                    <div className="db-table-actions">
-                      {canModify(item) && (
-                        <button className="db-btn db-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => openEdit(item)}>Edit</button>
-                      )}
-                      {isAdmin && (
-                        <button className="db-btn db-btn-danger" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => handleDelete(item.id)}>Delete</button>
-                      )}
-                      {!canModify(item) && !isAdmin && (
-                        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.25)' }}>View only</span>
-                      )}
-                    </div>
+                <tr>
+                  <td colSpan={isAdmin ? 7 : 6} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.25)', padding: '40px' }}>
+                    No events yet. Post in the Telegram channel to publish events.
                   </td>
                 </tr>
-              ))}
+              )}
+              {filtered.map(item => {
+                const past = isPast(item.date)
+                return (
+                  <tr key={item.id} style={{ opacity: past ? 0.6 : 1 }}>
+                    <td style={{ maxWidth: 260 }}>
+                      <span style={{ color: '#fff', fontWeight: 600 }}>{item.title}</span>
+                      {item.image && <span style={{ marginLeft: 8, fontSize: '0.72rem', color: '#10b981' }}>📷</span>}
+                    </td>
+                    <td>
+                      <span className="db-tag" style={{ color: catColors[item.category] || '#4a7fd4' }}>
+                        {item.category}
+                      </span>
+                    </td>
+                    <td style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                      {item.affair || '—'}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap', color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                      {item.date}
+                    </td>
+                    <td style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.82rem', maxWidth: 160 }}>
+                      {item.location || '—'}
+                    </td>
+                    <td>
+                      <span style={{
+                        fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                        background: past ? 'rgba(255,255,255,0.06)' : 'rgba(34,197,94,0.1)',
+                        color: past ? 'rgba(255,255,255,0.3)' : '#22c55e',
+                        border: past ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(34,197,94,0.25)',
+                      }}>
+                        {past ? 'Completed' : 'Upcoming'}
+                      </span>
+                    </td>
+                    {isAdmin && (
+                      <td>
+                        <button
+                          className="db-btn db-btn-danger"
+                          style={{ padding: '5px 10px', fontSize: '0.78rem' }}
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {modal && (
-        <div className="db-modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
-          <div className="db-modal">
-            <button className="db-modal-close" onClick={closeModal}>✕</button>
-            <h2>{editId ? 'Edit Event' : 'Add Event'}</h2>
-            {error && <div className="db-error" style={{ marginBottom: 16 }}>{error}</div>}
-            <form onSubmit={handleSave} className="db-form">
-              <div className="db-field">
-                <label>Title *</label>
-                <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Event name" />
-              </div>
-              <div className="db-field">
-                <label>Description</label>
-                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe the event…" />
-              </div>
-              <div className="db-form-row">
-                <div className="db-field">
-                  <label>Category</label>
-                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="db-field">
-                  <label>Date *</label>
-                  <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
-                </div>
-              </div>
-              <div className="db-form-row">
-                <div className="db-field">
-                  <label>Time</label>
-                  <input value={form.time} onChange={e => setForm(f => ({ ...f, time: e.target.value }))} placeholder="e.g. 9:00 AM – 1:00 PM" />
-                </div>
-                <div className="db-field">
-                  <label>Location</label>
-                  <input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Venue / place" />
-                </div>
-              </div>
-              <div className="db-form-actions">
-                <button type="button" className="db-btn db-btn-ghost" onClick={closeModal}>Cancel</button>
-                <button type="submit" className="db-btn db-btn-primary" disabled={saving}>{saving ? 'Saving…' : (editId ? 'Update' : 'Publish')}</button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </div>
