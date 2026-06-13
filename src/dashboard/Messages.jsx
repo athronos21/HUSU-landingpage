@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   collection, addDoc, onSnapshot, query,
-  orderBy, serverTimestamp, limit, where
+  serverTimestamp, limit, where
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
@@ -35,16 +35,24 @@ export default function Messages() {
   }
 
   // Listen to messages in active room — scoped query, no full collection read
+  // NOTE: orderBy omitted intentionally — combining where+orderBy on different
+  // fields requires a composite Firestore index. We sort client-side instead.
   useEffect(() => {
     if (!user) return
     const q = query(
       collection(db, 'messages'),
       where('roomId', '==', activeRoom),
-      orderBy('createdAt', 'asc'),
       limit(100)
     )
     const unsub = onSnapshot(q, snap => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      // Sort ascending by createdAt client-side
+      msgs.sort((a, b) => {
+        const ta = a.createdAt?.toMillis?.() || new Date(a.createdAt || 0).getTime()
+        const tb = b.createdAt?.toMillis?.() || new Date(b.createdAt || 0).getTime()
+        return ta - tb
+      })
+      setMessages(msgs)
     })
     return unsub
   }, [user, activeRoom])
