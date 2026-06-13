@@ -71,14 +71,16 @@ export default function Login() {
   const handleSignup = async e => {
     e.preventDefault()
     setError('')
-    if (!name.trim())         { setError('Full name is required.'); return }
-    if (password.length < 8)  { setError('Password must be at least 8 characters.'); return }
-    if (password !== confirm)  { setError('Passwords do not match.'); return }
+    if (!name.trim())        { setError('Full name is required.'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+    if (password !== confirm) { setError('Passwords do not match.'); return }
 
     setSubmitting(true)
     try {
+      // Create the Firebase Auth account
       const cred = await createUserWithEmailAndPassword(auth, email, password)
 
+      // Write the Firestore profile
       await setDoc(doc(db, 'users', cred.user.uid), {
         name:       name.trim(),
         email:      email.trim().toLowerCase(),
@@ -89,9 +91,14 @@ export default function Login() {
         createdAt:  new Date().toISOString(),
       })
 
-      setPending(true)
+      // Show success screen immediately — do this BEFORE signOut
+      // because AuthContext will sign out the user when it detects
+      // status === 'pending', which can unmount this component
       setSubmitting(false)
-      await auth.signOut()
+      setPending(true)
+
+      // Sign out in background — AuthContext will handle cleanup
+      auth.signOut().catch(() => {})
 
     } catch (err) {
       if (err.code === 'auth/email-already-in-use') {

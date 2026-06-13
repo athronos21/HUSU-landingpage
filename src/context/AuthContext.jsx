@@ -41,12 +41,14 @@ export function AuthProvider({ children }) {
         const data = snap.data()
 
         if (data.status === 'pending') {
-          // Block pending users — sign out once
+          // Block pending users — sign out once, but only if NOT on the login page.
+          // The login/signup page manages its own signout to avoid racing with
+          // the "Request Submitted" success screen.
           setProfile(null)
           setLoading(false)
-          if (!signingOut.current) {
+          if (!signingOut.current && !window.location.pathname.includes('/login')) {
             signingOut.current = true
-            auth.signOut()  // → onAuthStateChanged(null) will clear user
+            auth.signOut()
           }
           return
         }
