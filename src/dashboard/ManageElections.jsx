@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import {
   collection, addDoc, updateDoc, deleteDoc,
-  doc, onSnapshot, query, orderBy, serverTimestamp
+  doc, onSnapshot, query, orderBy, serverTimestamp,
+  where, getDocs
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useCollection } from '../hooks/useFirestore'
@@ -80,8 +81,8 @@ export default function ManageElections() {
   }
 
   const handlePublish = async (election) => {
-    if (!confirm('Publish results publicly? This will create a news post and update the Leadership page.')) return
-    setSaving(true)
+    if (!confirm('Publish results? This will:\n• Announce results as news\n• Update the winner\'s role\n• Update the Leadership page\n\nThis cannot be undone.')) return
+    setSaving(true); setError('')
     try {
       // Count votes
       const counts = {}
@@ -91,8 +92,8 @@ export default function ManageElections() {
       })
 
       // Find winner
-      const winnerId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
-      const winner   = getUser(winnerId)
+      const winnerId   = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+      const winner     = getUser(winnerId)
       const totalVotes = Object.keys(election.votes || {}).length
 
       const resultsText = election.nomineeUids
@@ -103,19 +104,27 @@ export default function ManageElections() {
           return `• ${u?.name || uid}: ${counts[uid] || 0} votes (${pct}%)`
         }).join('\n')
 
-      // Update election
+      // Update election doc
       await updateDoc(doc(db, 'elections', election.id), {
-        status:    'published',
+        status:      'published',
         winnerId,
-        results:   counts,
+        results:     counts,
         publishedAt: new Date().toISOString(),
       })
 
-      // Update winner's role in users
+      // Clear previous holder of this position (prevent two users with same role)
+      const prevHoldersSnap = await getDocs(
+        query(collection(db, 'users'), where('role', '==', election.position))
+      )
+      for (const d of prevHoldersSnap.docs) {
+        if (d.id !== winnerId) {
+          await updateDoc(doc(db, 'users', d.id), { role: 'member' })
+        }
+      }
+
+      // Update winner's role
       if (winner) {
-        await updateDoc(doc(db, 'users', winnerId), {
-          role: election.position,
-        })
+        await updateDoc(doc(db, 'users', winnerId), { role: election.position })
       }
 
       // Create news announcement
@@ -128,22 +137,29 @@ export default function ManageElections() {
         createdAt: new Date().toISOString(),
       })
 
-      // Also update the team collection for public display
-      // Find existing team entry for this position and update, or add new
-      const teamQuery = query(collection(db, 'team'))
-      // We'll just add the winner as a team member if winner exists
+      // Upsert team entry — update existing entry for this position or create new
       if (winner) {
-        await addDoc(collection(db, 'team'), {
+        const teamSnap = await getDocs(
+          query(collection(db, 'team'), where('title', '==', ROLE_LABELS[election.position] || election.position))
+        )
+        const teamData = {
           name:      winner.name,
           title:     ROLE_LABELS[election.position] || election.position,
           bio:       winner.bio || '',
           image:     winner.image || null,
-          createdAt: serverTimestamp(),
-        })
+          updatedAt: serverTimestamp(),
+        }
+        if (!teamSnap.empty) {
+          // Update existing entry instead of creating duplicate
+          await updateDoc(doc(db, 'team', teamSnap.docs[0].id), teamData)
+        } else {
+          await addDoc(collection(db, 'team'), { ...teamData, createdAt: serverTimestamp() })
+        }
       }
 
     } catch (err) {
       setError(err.message || 'Failed to publish.')
+      alert('Failed to publish results: ' + err.message)
     } finally {
       setSaving(false)
     }

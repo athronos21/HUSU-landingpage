@@ -6,6 +6,7 @@ import {
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import { useCollection } from '../hooks/useFirestore'
+import { COMMS_ROLES } from './roles'
 import './Dashboard.css'
 import './Letters.css'
 
@@ -20,22 +21,40 @@ export default function Letters() {
   const [sending,    setSending]    = useState(false)
   const [error,      setError]      = useState('')
 
-  // Eligible recipients — 5 leaders + all heads (excluding self)
-  const eligibleRoles = ['admin', 'affair_head', 'assoc_head']
+  // Eligible recipients — all comms roles except self
   const recipients = allUsers.filter(u =>
     u.id !== user?.uid &&
-    eligibleRoles.includes(u.role) &&
+    COMMS_ROLES.includes(u.role) &&
     u.status !== 'pending'
   )
 
-  // Live letters
+  // Live letters — scoped to current user (inbox or sent)
   useEffect(() => {
     if (!user) return
-    const q = query(collection(db, 'letters'), orderBy('createdAt', 'desc'))
-    const unsub = onSnapshot(q, snap => {
-      setLetters(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    return unsub
+    // Fetch letters where current user is sender or recipient
+    // Two separate queries merged client-side (Firestore doesn't support OR on different fields in one query)
+    const qSent = query(
+      collection(db, 'letters'),
+      where('fromUid', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    )
+    const qInbox = query(
+      collection(db, 'letters'),
+      where('toUids', 'array-contains', user.uid),
+      orderBy('createdAt', 'desc')
+    )
+    const seen = new Map()
+    const merge = () => {
+      const arr = [...seen.values()].sort((a, b) => {
+        const ta = a.createdAt?.toMillis?.() || 0
+        const tb = b.createdAt?.toMillis?.() || 0
+        return tb - ta
+      })
+      setLetters(arr)
+    }
+    const unsubSent  = onSnapshot(qSent,  snap => { snap.docs.forEach(d => seen.set(d.id, { id: d.id, ...d.data() })); merge() })
+    const unsubInbox = onSnapshot(qInbox, snap => { snap.docs.forEach(d => seen.set(d.id, { id: d.id, ...d.data() })); merge() })
+    return () => { unsubSent(); unsubInbox() }
   }, [user])
 
   const inbox = letters.filter(l => l.toUids?.includes(user?.uid))
@@ -265,7 +284,10 @@ export default function Letters() {
                     onClick={() => openLetter(letter)}
                   >
                     <div className="ltr-item-avatar">
-                      {(tab === 'inbox' ? letter.fromName : 'To')[0]}
+                      {tab === 'inbox'
+                        ? (letter.fromName || '?')[0]
+                        : (() => { const r = allUsers.find(u => letter.toUids?.[0] === u.id); return (r?.name || 'To')[0] })()
+                      }
                     </div>
                     <div className="ltr-item-body">
                       <div className="ltr-item-top">

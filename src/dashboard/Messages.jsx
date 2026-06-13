@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   collection, addDoc, onSnapshot, query,
-  orderBy, serverTimestamp, limit
+  orderBy, serverTimestamp, limit, where
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
 import { useCollection } from '../hooks/useFirestore'
+import { COMMS_ROLES } from './roles'
 import './Dashboard.css'
 import './Messages.css'
 
@@ -20,11 +21,10 @@ export default function Messages() {
   const [sending,    setSending]    = useState(false)
   const bottomRef = useRef(null)
 
-  // Eligible chat members
-  const eligibleRoles = ['admin', 'affair_head', 'assoc_head']
+  // Eligible chat members — all comms roles except self
   const members = allUsers.filter(u =>
     u.id !== user?.uid &&
-    eligibleRoles.includes(u.role) &&
+    COMMS_ROLES.includes(u.role) &&
     u.status !== 'pending'
   )
 
@@ -34,18 +34,17 @@ export default function Messages() {
     return `dm_${ids[0]}_${ids[1]}`
   }
 
-  // Listen to messages in active room
+  // Listen to messages in active room — scoped query, no full collection read
   useEffect(() => {
     if (!user) return
     const q = query(
       collection(db, 'messages'),
+      where('roomId', '==', activeRoom),
       orderBy('createdAt', 'asc'),
-      limit(200)
+      limit(100)
     )
-    // We filter by roomId client-side for simplicity
     const unsub = onSnapshot(q, snap => {
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      setMessages(all.filter(m => m.roomId === activeRoom))
+      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     })
     return unsub
   }, [user, activeRoom])

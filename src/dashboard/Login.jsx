@@ -52,7 +52,8 @@ export default function Login() {
       }
 
       // Active — navigate (AuthContext will pick up the session)
-      navigate(profile.mustChangePassword === 'true' ? '/change-password' : '/dashboard', { replace: true })
+      const mustChange = profile.mustChangePassword === true || profile.mustChangePassword === 'true'
+      navigate(mustChange ? '/change-password' : '/dashboard', { replace: true })
 
     } catch (err) {
       const code = err.code || ''

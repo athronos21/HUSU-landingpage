@@ -78,6 +78,7 @@ export default function ManageSiteSettings() {
   const [data, setData]       = useState(defaults)
   const [saving, setSaving]   = useState(false)
   const [saved, setSaved]     = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -90,13 +91,13 @@ export default function ManageSiteSettings() {
   }, [])
 
   const save = async () => {
-    setSaving(true); setSaved(false)
+    setSaving(true); setSaved(false); setSaveError('')
     try {
-      await setDoc(doc(db, 'settings', 'site'), data)
+      await setDoc(doc(db, 'settings', 'site'), data, { merge: true })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
     } catch (e) {
-      alert('Failed to save: ' + e.message)
+      setSaveError('Failed to save: ' + e.message)
     } finally {
       setSaving(false)
     }
@@ -156,6 +157,9 @@ export default function ManageSiteSettings() {
         <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 8, color: '#86efac', padding: '10px 16px', marginBottom: 20, fontSize: '0.88rem' }}>
           ✓ Site settings saved. Changes are now live on the website.
         </div>
+      )}
+      {saveError && (
+        <div className="db-error" style={{ marginBottom: 20 }}>{saveError}</div>
       )}
 
       {/* Tab navigation */}
