@@ -21,20 +21,38 @@ service cloud.firestore {
                    || request.resource.data.source == 'telegram';
     }
 
-    // ── All other collections: authenticated only ──
+    // ── Affairs ──
     match /affairs/{doc} {
       allow write: if request.auth != null;
     }
+
+    // ── Team ──
     match /team/{doc} {
       allow write: if request.auth != null;
     }
-    // ── Users: authenticated users can write their own doc ──
+
+    // ── Users ──
     match /users/{uid} {
-      // Allow write if authenticated as the same user (signup flow)
-      // or if admin (server-side worker uses API key bypass)
       allow write: if request.auth != null;
     }
+
+    // ── Settings ──
     match /settings/{doc} {
+      allow write: if request.auth != null;
+    }
+
+    // ── Elections ──
+    match /elections/{doc} {
+      allow write: if request.auth != null;
+    }
+
+    // ── Letters: authenticated users can send and update ──
+    match /letters/{doc} {
+      allow write: if request.auth != null;
+    }
+
+    // ── Messages: authenticated users can send ──
+    match /messages/{doc} {
       allow write: if request.auth != null;
     }
   }
