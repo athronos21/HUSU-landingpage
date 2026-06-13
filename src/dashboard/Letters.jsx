@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   collection, addDoc, onSnapshot, query,
-  orderBy, doc, updateDoc, serverTimestamp, where
+  doc, updateDoc, serverTimestamp, where
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext'
@@ -31,23 +31,22 @@ export default function Letters() {
   // Live letters — scoped to current user (inbox or sent)
   useEffect(() => {
     if (!user) return
-    // Fetch letters where current user is sender or recipient
-    // Two separate queries merged client-side (Firestore doesn't support OR on different fields in one query)
+    // Two separate queries merged client-side.
+    // NOTE: orderBy is intentionally omitted here — combining array-contains
+    // with orderBy requires a Firestore composite index. We sort client-side instead.
     const qSent = query(
       collection(db, 'letters'),
-      where('fromUid', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where('fromUid', '==', user.uid)
     )
     const qInbox = query(
       collection(db, 'letters'),
-      where('toUids', 'array-contains', user.uid),
-      orderBy('createdAt', 'desc')
+      where('toUids', 'array-contains', user.uid)
     )
     const seen = new Map()
     const merge = () => {
       const arr = [...seen.values()].sort((a, b) => {
-        const ta = a.createdAt?.toMillis?.() || 0
-        const tb = b.createdAt?.toMillis?.() || 0
+        const ta = a.createdAt?.toMillis?.() || new Date(a.createdAt || 0).getTime()
+        const tb = b.createdAt?.toMillis?.() || new Date(b.createdAt || 0).getTime()
         return tb - ta
       })
       setLetters(arr)
