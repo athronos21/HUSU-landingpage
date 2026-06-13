@@ -2,5 +2,12 @@ name = "husu-telegram-bot"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
-# Environment variables are set in Cloudflare dashboard
+# KV namespace for bot conversation state and user profiles
+# Run: npx wrangler kv namespace create BOT_STATE
+# Then replace the id below with the one returned
+[[kv_namespaces]]
+binding = "BOT_STATE"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+# Environment variables are set in Cloudflare dashboard as Secrets
 # DO NOT put secrets here — use `wrangler secret put` or the dashboard
