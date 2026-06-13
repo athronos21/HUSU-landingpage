@@ -2,57 +2,62 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Public read for all collections ──
+    // ── Global: everyone can read everything (public website) ──────────────
     match /{document=**} {
       allow read: if true;
     }
 
-    // ── News: authenticated users OR telegram bot posts ──
-    match /news/{doc} {
-      allow read: if true;
-      allow write: if request.auth != null
-                   || request.resource.data.source == 'telegram';
-    }
-
-    // ── Events: authenticated users OR telegram bot posts ──
-    match /events/{doc} {
-      allow read: if true;
-      allow write: if request.auth != null
-                   || request.resource.data.source == 'telegram';
-    }
-
-    // ── Affairs ──
-    match /affairs/{doc} {
-      allow write: if request.auth != null;
-    }
-
-    // ── Team ──
-    match /team/{doc} {
-      allow write: if request.auth != null;
-    }
-
-    // ── Users ──
+    // ── Users ──────────────────────────────────────────────────────────────
+    // Write allowed for:
+    //   - any authenticated user (signup writes their own doc, admin edits)
     match /users/{uid} {
       allow write: if request.auth != null;
     }
 
-    // ── Settings ──
-    match /settings/{doc} {
+    // ── News ───────────────────────────────────────────────────────────────
+    // Write allowed for:
+    //   - authenticated dashboard users
+    //   - Telegram bot posts (identified by source == 'telegram')
+    match /news/{doc} {
+      allow write: if request.auth != null
+                   || request.resource.data.source == 'telegram';
+    }
+
+    // ── Events ─────────────────────────────────────────────────────────────
+    // Same as news — dashboard users + Telegram bot
+    match /events/{doc} {
+      allow write: if request.auth != null
+                   || request.resource.data.source == 'telegram';
+    }
+
+    // ── Affairs ────────────────────────────────────────────────────────────
+    match /affairs/{doc} {
       allow write: if request.auth != null;
     }
 
-    // ── Elections ──
+    // ── Team (leadership page) ─────────────────────────────────────────────
+    match /team/{doc} {
+      allow write: if request.auth != null;
+    }
+
+    // ── Elections ──────────────────────────────────────────────────────────
+    // Votes and election management — authenticated only
     match /elections/{doc} {
       allow write: if request.auth != null;
     }
 
-    // ── Letters: authenticated users can send and update ──
+    // ── Letters (internal formal communication) ────────────────────────────
     match /letters/{doc} {
       allow write: if request.auth != null;
     }
 
-    // ── Messages: authenticated users can send ──
+    // ── Messages (internal chat) ───────────────────────────────────────────
     match /messages/{doc} {
+      allow write: if request.auth != null;
+    }
+
+    // ── Settings (site config, contact info) ───────────────────────────────
+    match /settings/{doc} {
       allow write: if request.auth != null;
     }
   }
