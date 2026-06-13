@@ -137,15 +137,27 @@ async function writeUserProfile(uid, profile, apiKey, projectId, idToken) {
 
 // ── Upload photo from Telegram to Cloudinary ──────────────────────
 async function uploadPhoto(fileId, botToken) {
+  // 1. Get the file path from Telegram
   const fileRes  = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`)
   const fileData = await fileRes.json()
   if (!fileData.ok) return null
+
+  // 2. Download the actual file bytes from Telegram
   const fileUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`
+  const imgRes  = await fetch(fileUrl)
+  if (!imgRes.ok) return null
+  const imgBlob = await imgRes.blob()
+
+  // 3. Upload the binary file to Cloudinary
   const fd = new FormData()
-  fd.append('file', fileUrl)
+  fd.append('file', imgBlob, 'photo.jpg')
   fd.append('upload_preset', 'i0ysxxhc')
   fd.append('folder', 'telegram')
-  const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', { method: 'POST', body: fd })
+
+  const upRes = await fetch('https://api.cloudinary.com/v1_1/dvc5ijanb/image/upload', {
+    method: 'POST',
+    body: fd,
+  })
   if (!upRes.ok) return null
   const upData = await upRes.json()
   return upData.secure_url || null
@@ -276,6 +288,14 @@ export default {
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, X-Worker-Secret',
         },
+      })
+    }
+
+    // Route: /health — liveness check
+    if (url.pathname === '/health') {
+      return new Response(JSON.stringify({ ok: true, worker: 'husu-telegram-bot' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
       })
     }
 
