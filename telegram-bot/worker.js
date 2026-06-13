@@ -217,17 +217,19 @@ async function uploadPhoto(fileId, botToken) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function newsPreview(d) {
+  const affairLine = d.affair ? `🏛️ ${d.affair} Affair  •  ` : ''
   return `📰 <b>NEWS PREVIEW</b>\n\n` +
     `<b>${d.title}</b>\n` +
-    `🏛️ ${d.affair} Affair  •  📂 ${d.category}\n\n` +
+    `${affairLine}📂 ${d.category}\n\n` +
     `${d.description}\n\n` +
     `📅 ${d.date}${d.image ? '\n📷 Photo attached' : ''}`
 }
 
 function eventPreview(d) {
+  const affairLine = d.affair ? `🏛️ ${d.affair} Affair  •  ` : ''
   return `📅 <b>EVENT PREVIEW</b>\n\n` +
     `<b>${d.title}</b>\n` +
-    `🏛️ ${d.affair} Affair  •  📂 ${d.category}\n\n` +
+    `${affairLine}📂 ${d.category}\n\n` +
     `${d.description}\n\n` +
     `📅 ${d.date}` +
     `${d.time     ? `  •  ⏰ ${d.time}`     : ''}` +
@@ -236,18 +238,20 @@ function eventPreview(d) {
 }
 
 function newsChannelPost(d) {
+  const affairLine = d.affair ? `\n🏛️ <i>${d.affair} Affair</i>  •  ` : '\n'
   return `📰 <b>${d.title}</b>\n\n` +
-    `${d.description}\n\n` +
-    `🏛️ <i>${d.affair} Affair</i>  •  📂 ${d.category}  •  📅 ${d.date}`
+    `${d.description}` +
+    `${affairLine}📂 ${d.category}  •  📅 ${d.date}`
 }
 
 function eventChannelPost(d) {
+  const affairLine = d.affair ? `\n🏛️ <i>${d.affair} Affair</i>  •  ` : '\n'
   return `📅 <b>${d.title}</b>\n\n` +
     `${d.description}\n\n` +
     `📅 ${d.date}` +
     `${d.time     ? `  •  ⏰ ${d.time}`     : ''}` +
     `${d.location ? `\n📍 ${d.location}` : ''}` +
-    `\n🏛️ <i>${d.affair} Affair</i>  •  📂 ${d.category}`
+    `${affairLine}📂 ${d.category}`
 }
 
 const NEWS_CATEGORIES  = ['Announcement', 'Academic', 'Service', 'Discipline']
@@ -290,10 +294,17 @@ async function handleBotMessage(msg, env) {
       const fsUser = await verifyUser(username, env.FIREBASE_API_KEY, env.PROJECT_ID)
       if (fsUser) {
         // Pre-fill from Firestore profile, just need their Telegram confirmation
-        const newProfile = { name: fsUser.name, affair: fsUser.affairName, role: fsUser.role, telegramId: uid, username }
+        const newProfile = {
+          name:     fsUser.name,
+          affair:   fsUser.affairName || '',  // empty string for admin/no affair
+          role:     fsUser.role,
+          telegramId: uid,
+          username,
+        }
         await saveProfile(kv, uid, newProfile)
+        const affairText = fsUser.affairName ? `\n🏛️ ${fsUser.affairName} Affair` : ''
         await sendMessage(chatId,
-          `✅ <b>Identity verified!</b>\n\nWelcome, <b>${fsUser.name}</b>!\n🏛️ ${fsUser.affairName} Affair\n\nYou can now post news and events.`,
+          `✅ <b>Identity verified!</b>\n\nWelcome, <b>${fsUser.name}</b>!${affairText}\n\nYou can now post news and events.`,
           keyboard([['📰 Post News', '📅 Post Event'], ['👤 My Profile']]),
           env.BOT_TOKEN
         )
@@ -324,7 +335,7 @@ async function handleBotMessage(msg, env) {
     await sendMessage(chatId,
       `👤 <b>Your Profile</b>\n\n` +
       `Name: <b>${profile.name}</b>\n` +
-      `Affair: <b>${profile.affair}</b>\n` +
+      `${profile.affair ? `Affair: <b>${profile.affair}</b>\n` : ''}` +
       `Role: <b>${profile.role}</b>\n` +
       `Telegram: @${profile.username}\n\n` +
       `<i>To update your profile, contact the administrator.</i>`,
