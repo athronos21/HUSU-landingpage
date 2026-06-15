@@ -1,0 +1,496 @@
+/* ══════════════════════════════════════════════════
+   VOTE DASHBOARD — Enhanced Voting Experience
+   ══════════════════════════════════════════════════ */
+
+.vote-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255, 255, 255, 0.25);
+  animation: fadeIn 0.6s ease-out;
+}
+
+.vote-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Election Card ── */
+.vote-election-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.5s ease-out backwards;
+}
+
+.vote-election-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation delays */
+.vote-election-card:nth-child(1) { animation-delay: 0.1s; }
+.vote-election-card:nth-child(2) { animation-delay: 0.2s; }
+.vote-election-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* ── Status Badge ── */
+.vote-status-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  animation: pulseGreen 2s ease-in-out infinite;
+}
+
+@keyframes pulseGreen {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+
+/* ── Election Header ── */
+.vote-election-header {
+  margin-bottom: 20px;
+}
+
+.vote-election-title {
+  color: #fff;
+  margin: 12px 0 4px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.vote-election-meta {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.vote-election-meta strong {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+/* ── Success State ── */
+.vote-success {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.vote-success::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
+  animation: rotate 8s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.vote-success-title {
+  color: #86efac;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.vote-success-text {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.vote-success-text strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ── Instruction Text ── */
+.vote-instruction {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 18px;
+  line-height: 1.6;
+}
+
+/* ── Nominee Cards ── */
+.vote-nominees {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.vote-nominee-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.vote-nominee-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  transition: left 0.5s;
+}
+
+.vote-nominee-card:hover::before {
+  left: 100%;
+}
+
+.vote-nominee-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.vote-nominee-card.selected {
+  border-color: #e8a020;
+  background: rgba(232, 160, 32, 0.1);
+  box-shadow: 0 0 0 2px rgba(232, 160, 32, 0.2);
+}
+
+.vote-nominee-card.selected:hover {
+  background: rgba(232, 160, 32, 0.12);
+  border-color: #fbbf24;
+}
+
+/* ── Avatar ── */
+.vote-nominee-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.vote-nominee-card.selected .vote-nominee-avatar {
+  border-color: #e8a020;
+  box-shadow: 0 0 15px rgba(232, 160, 32, 0.4);
+}
+
+.vote-nominee-card:hover .vote-nominee-avatar {
+  transform: scale(1.08);
+}
+
+.vote-nominee-avatar-fallback {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.vote-nominee-card.selected .vote-nominee-avatar-fallback {
+  background: #1a3a6b;
+  box-shadow: 0 0 15px rgba(232, 160, 32, 0.4);
+}
+
+.vote-nominee-card:hover .vote-nominee-avatar-fallback {
+  transform: scale(1.08);
+}
+
+/* ── Nominee Info ── */
+.vote-nominee-info {
+  flex: 1;
+}
+
+.vote-nominee-name {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #fff;
+  transition: color 0.3s ease;
+}
+
+.vote-nominee-card:hover .vote-nominee-name {
+  color: #fbbf24;
+}
+
+.vote-nominee-role {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.3px;
+}
+
+.vote-nominee-bio {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.5;
+}
+
+/* ── Radio Button ── */
+.vote-radio {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.vote-nominee-card.selected .vote-radio {
+  border-color: #e8a020;
+  background: rgba(232, 160, 32, 0.1);
+}
+
+.vote-radio-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e8a020;
+  transform: scale(0);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(232, 160, 32, 0.6);
+}
+
+.vote-nominee-card.selected .vote-radio-dot {
+  transform: scale(1);
+}
+
+/* ── Results Section ── */
+.vote-results-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 40px 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vote-results-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 18px;
+  animation: fadeIn 0.5s ease-out backwards;
+}
+
+.vote-results-title {
+  color: #fff;
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.vote-results-meta {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+
+/* ── Result Row ── */
+.vote-result-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+  padding: 6px 0;
+}
+
+.vote-result-row:hover {
+  transform: translateX(4px);
+}
+
+.vote-result-name {
+  min-width: 140px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
+  transition: color 0.3s ease;
+}
+
+.vote-result-row:hover .vote-result-name {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.vote-result-name.winner {
+  color: #e8a020;
+  font-weight: 700;
+}
+
+.vote-result-bar-container {
+  flex: 1;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.vote-result-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4a7fd4, #5a8fe4);
+  border-radius: 5px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(74, 127, 212, 0.4);
+}
+
+.vote-result-bar.winner {
+  background: linear-gradient(90deg, #e8a020, #fbbf24);
+  box-shadow: 0 0 15px rgba(232, 160, 32, 0.5);
+}
+
+.vote-result-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.vote-result-stats {
+  min-width: 80px;
+  text-align: right;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .vote-election-card {
+    padding: 20px;
+  }
+  
+  .vote-nominee-card {
+    padding: 14px;
+    gap: 12px;
+  }
+  
+  .vote-nominee-avatar,
+  .vote-nominee-avatar-fallback {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .vote-nominee-name {
+    font-size: 0.95rem;
+  }
+  
+  .vote-result-name {
+    min-width: 100px;
+    font-size: 0.85rem;
+  }
+  
+  .vote-result-bar-container {
+    height: 8px;
+  }
+}

@@ -30,11 +30,19 @@
 html { scroll-behavior: smooth; }
 
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  flex: 1;
 }
 
 a { text-decoration: none; color: inherit; }

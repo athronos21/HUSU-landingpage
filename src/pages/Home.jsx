@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FacebookIcon, TikTokIcon, XIcon, LinkedInIcon, TelegramIcon } from '../components/SocialIcons'
-import { useNews, useEvents, useContact, useSiteSettings, useTeam, useAffairs } from '../hooks/usePublicData'
+import { useNews, useEvents, useContact, useSiteSettings, useTeam, useAffairs, usePublicElection } from '../hooks/usePublicData'
+import { useCollection } from '../hooks/useFirestore'
 import { renderIcon } from '../dashboard/IconPicker'
+import { ROLE_LABELS } from '../dashboard/roles'
 import './Home.css'
 
 /* ── Animated counter hook ── */
@@ -85,6 +87,8 @@ export default function Home() {
   const { data: eventsData }    = useEvents()
   const { data: management }    = useTeam()
   const { data: affairs }       = useAffairs()
+  const { election }            = usePublicElection()
+  const { docs: allUsers }      = useCollection('users', 'createdAt')
 
   const hero   = site.hero
   const stats  = site.stats
@@ -93,6 +97,9 @@ export default function Home() {
 
   // Guard: don't render leadership section until team data is loaded
   const president = management[0]
+  
+  // Helper to get user by ID for election
+  const getUser = (uid) => allUsers.find(u => u.id === uid)
 
   return (
     <div className="home">
@@ -296,6 +303,120 @@ export default function Home() {
                   <div className="mc-bar" />
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ══════════════ ELECTION SHOWCASE ══════════════ */}
+      {election && (
+        <section className="section election-showcase-section">
+          <div className="election-showcase-bg">
+            <div className="esc-shape esc-1" />
+            <div className="esc-shape esc-2" />
+            <div className="esc-shape esc-3" />
+          </div>
+          <div className="container">
+            <div className="election-showcase-header">
+              <div className="esc-header-left">
+                <span className="esc-badge">
+                  {election.status === 'active' ? '🟢 LIVE NOW' : '🏆 RESULTS OUT'}
+                </span>
+                <h2>{election.title}</h2>
+                <p className="esc-position">{ROLE_LABELS[election.position] || election.position}</p>
+              </div>
+              <Link to="/election" className="btn btn-primary btn-glow">
+                {election.status === 'active' ? 'View Election →' : 'See Results →'}
+              </Link>
+            </div>
+
+            {election.status === 'active' && (
+              <div className="esc-nominees-grid">
+                {(election.nomineeUids || []).slice(0, 3).map((uid, i) => {
+                  const user = getUser(uid)
+                  return (
+                    <div key={uid} className="esc-nominee-card" style={{ animationDelay: `${i * 0.1}s` }}>
+                      <div className="esc-nominee-avatar">
+                        {user?.image 
+                          ? <img src={user.image} alt={user.name} />
+                          : <span>{(user?.name || '?')[0]}</span>
+                        }
+                        <div className="esc-avatar-ring" />
+                      </div>
+                      <h4>{user?.name || 'Unknown'}</h4>
+                      <p className="esc-nominee-role">{ROLE_LABELS[user?.role] || user?.role || 'Nominee'}</p>
+                      {user?.bio && <p className="esc-nominee-bio">{user.bio.slice(0, 80)}…</p>}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {election.status === 'published' && election.winnerId && (() => {
+              const winner = getUser(election.winnerId)
+              const counts = {}
+              election.nomineeUids?.forEach(uid => { counts[uid] = 0 })
+              Object.values(election.votes || {}).forEach(uid => {
+                counts[uid] = (counts[uid] || 0) + 1
+              })
+              const totalVotes = Object.keys(election.votes || {}).length
+              const winnerVotes = counts[election.winnerId] || 0
+              const winnerPct = totalVotes > 0 ? Math.round((winnerVotes / totalVotes) * 100) : 0
+
+              return (
+                <div className="esc-winner-card">
+                  <div className="esc-winner-left">
+                    <div className="esc-winner-avatar">
+                      {winner?.image 
+                        ? <img src={winner.image} alt={winner.name} />
+                        : <span>{(winner?.name || 'W')[0]}</span>
+                      }
+                      <div className="esc-winner-crown">👑</div>
+                    </div>
+                  </div>
+                  <div className="esc-winner-right">
+                    <span className="esc-winner-label">Elected {ROLE_LABELS[election.position]}</span>
+                    <h3>{winner?.name || 'Winner'}</h3>
+                    <div className="esc-winner-stats">
+                      <div className="esc-winner-stat">
+                        <span className="stat-value">{winnerVotes}</span>
+                        <span className="stat-label">Votes</span>
+                      </div>
+                      <div className="esc-stat-divider" />
+                      <div className="esc-winner-stat">
+                        <span className="stat-value">{winnerPct}%</span>
+                        <span className="stat-label">Of Total</span>
+                      </div>
+                      <div className="esc-stat-divider" />
+                      <div className="esc-winner-stat">
+                        <span className="stat-value">{totalVotes}</span>
+                        <span className="stat-label">Total Votes</span>
+                      </div>
+                    </div>
+                    {winner?.bio && <p className="esc-winner-bio">{winner.bio}</p>}
+                  </div>
+                </div>
+              )
+            })()}
+
+            <div className="esc-footer">
+              <div className="esc-footer-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>
+                  {election.status === 'active' 
+                    ? `Voting ends ${election.endDate}` 
+                    : 'Election concluded'}
+                </span>
+              </div>
+              <Link to="/election" className="esc-footer-link">
+                Full election details
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+                  <path d="M3 8h10M9 4l4 4-4 4"/>
+                </svg>
+              </Link>
             </div>
           </div>
         </section>
