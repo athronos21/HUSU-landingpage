@@ -50,20 +50,39 @@ export default function Events() {
   const [activeCat,  setActiveCat]  = useState('All')
   const [activeTime, setActiveTime] = useState('All')
   const [selected,   setSelected]   = useState(null)
-  const [interested, setInterested] = useState({})
-  const [interestedCount, setInterestedCount] = useState({})
+  const [reactions, setReactions] = useState({})
+  const [reactionCounts, setReactionCounts] = useState({})
+  const [showReactionPicker, setShowReactionPicker] = useState(null)
   const [showComments, setShowComments] = useState(null)
   const [comments, setComments] = useState({})
   const [commentText, setCommentText] = useState('')
   const [showShareModal, setShowShareModal] = useState(null)
 
-  // Initialize interested counts
+  const REACTIONS = {
+    like: { emoji: '👍', label: 'Like', color: '#1877f2' },
+    love: { emoji: '❤️', label: 'Love', color: '#f33e58' },
+    care: { emoji: '🤗', label: 'Care', color: '#f7b125' },
+    haha: { emoji: '😂', label: 'Haha', color: '#f7b125' },
+    wow: { emoji: '😮', label: 'Wow', color: '#f7b125' },
+    interested: { emoji: '⭐', label: 'Interested', color: '#f7b125' },
+    going: { emoji: '✅', label: 'Going', color: '#42b72a' },
+  }
+
+  // Initialize reaction counts
   useEffect(() => {
     const counts = {}
     events.forEach(event => {
-      counts[event.id] = Math.floor(Math.random() * 50) + 20
+      counts[event.id] = {
+        like: Math.floor(Math.random() * 20) + 5,
+        love: Math.floor(Math.random() * 15) + 2,
+        care: Math.floor(Math.random() * 8),
+        haha: Math.floor(Math.random() * 10),
+        wow: Math.floor(Math.random() * 12),
+        interested: Math.floor(Math.random() * 30) + 10,
+        going: Math.floor(Math.random() * 15) + 5,
+      }
     })
-    setInterestedCount(counts)
+    setReactionCounts(counts)
   }, [events])
 
   // Debug: Log events with images
@@ -77,15 +96,52 @@ export default function Events() {
     }
   }, [events])
 
-  const toggleInterested = (id) => {
-    setInterested(prev => {
-      const newInterested = { ...prev, [id]: !prev[id] }
-      setInterestedCount(prevCount => ({
-        ...prevCount,
-        [id]: (prevCount[id] || 0) + (newInterested[id] ? 1 : -1)
-      }))
-      return newInterested
+  const handleReaction = (eventId, reactionType) => {
+    setReactions(prev => {
+      const oldReaction = prev[eventId]
+      const newReactions = { ...prev, [eventId]: reactionType }
+      
+      setReactionCounts(prevCounts => {
+        const counts = { ...prevCounts[eventId] }
+        if (oldReaction) counts[oldReaction] = Math.max(0, counts[oldReaction] - 1)
+        counts[reactionType] = (counts[reactionType] || 0) + 1
+        return { ...prevCounts, [eventId]: counts }
+      })
+      
+      setShowReactionPicker(null)
+      return newReactions
     })
+  }
+
+  const removeReaction = (eventId) => {
+    setReactions(prev => {
+      const oldReaction = prev[eventId]
+      if (oldReaction) {
+        setReactionCounts(prevCounts => {
+          const counts = { ...prevCounts[eventId] }
+          counts[oldReaction] = Math.max(0, counts[oldReaction] - 1)
+          return { ...prevCounts, [eventId]: counts }
+        })
+      }
+      const newReactions = { ...prev }
+      delete newReactions[eventId]
+      return newReactions
+    })
+    setShowReactionPicker(null)
+  }
+
+  const getTotalReactions = (eventId) => {
+    const counts = reactionCounts[eventId] || {}
+    return Object.values(counts).reduce((sum, count) => sum + count, 0)
+  }
+
+  const getTopReactions = (eventId) => {
+    const counts = reactionCounts[eventId] || {}
+    return Object.entries(counts)
+      .filter(([_, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([type, _]) => type)
   }
 
   const handleCommentClick = (id) => {
@@ -121,13 +177,6 @@ export default function Events() {
     } else {
       setShowShareModal(event)
     }
-  }
-
-  const copyLink = () => {
-    navigator.clipboard.writeText(window.location.href)
-    setTimeout(() => {
-      setShowShareModal(null)
-    }, 1000)
   }
 
   const copyLink = () => {
@@ -375,9 +424,22 @@ export default function Events() {
 
                       {/* Engagement Bar */}
                       <div className="fb-ev-engagement">
-                        <span onClick={(e) => { e.stopPropagation(); handleCommentClick(event.id); }} style={{ cursor: 'pointer' }}>
-                          {interestedCount[event.id] || 0} interested
-                        </span>
+                        {getTopReactions(event.id).length > 0 ? (
+                          <>
+                            <div className="fb-reaction-icons" style={{ display: 'inline-flex', gap: '4px', marginRight: '8px' }}>
+                              {getTopReactions(event.id).map(type => (
+                                <span key={type} className="fb-reaction-icon" style={{ background: REACTIONS[type].color, width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', border: '2px solid #fff', marginLeft: '-4px' }}>
+                                  {REACTIONS[type].emoji}
+                                </span>
+                              ))}
+                            </div>
+                            <span onClick={(e) => { e.stopPropagation(); }} style={{ cursor: 'pointer' }}>
+                              {getTotalReactions(event.id)} reactions
+                            </span>
+                          </>
+                        ) : (
+                          <span style={{ color: '#65676b' }}>Be the first to react</span>
+                        )}
                         <span>•</span>
                         <span onClick={(e) => { e.stopPropagation(); handleCommentClick(event.id); }} style={{ cursor: 'pointer' }}>
                           {(comments[event.id] || []).length} comment{(comments[event.id] || []).length !== 1 ? 's' : ''}
@@ -386,15 +448,52 @@ export default function Events() {
 
                       {/* Footer */}
                       <div className="fb-ev-card-footer">
-                        <button 
-                          className={`fb-action-btn${interested[event.id] ? ' active' : ''}`}
-                          onClick={(e) => { e.stopPropagation(); toggleInterested(event.id); }}
-                        >
-                          <svg viewBox="0 0 24 24" fill={interested[event.id] ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                          </svg>
-                          {interested[event.id] ? 'Interested ✓' : 'Interested'}
-                        </button>
+                        <div className="fb-reaction-btn-wrapper">
+                          <button 
+                            className={`fb-action-btn${reactions[event.id] ? ' active' : ''}`}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              reactions[event.id] ? removeReaction(event.id) : setShowReactionPicker(showReactionPicker === event.id ? null : event.id);
+                            }}
+                            onMouseEnter={() => setShowReactionPicker(event.id)}
+                            style={reactions[event.id] ? { color: REACTIONS[reactions[event.id]].color } : {}}
+                          >
+                            {reactions[event.id] ? (
+                              <>
+                                <span style={{ fontSize: '1.2rem' }}>{REACTIONS[reactions[event.id]].emoji}</span>
+                                {REACTIONS[reactions[event.id]].label}
+                              </>
+                            ) : (
+                              <>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                                </svg>
+                                React
+                              </>
+                            )}
+                          </button>
+                          
+                          {/* Reaction Picker */}
+                          {showReactionPicker === event.id && (
+                            <div 
+                              className="fb-reaction-picker"
+                              onMouseLeave={() => setShowReactionPicker(null)}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {Object.entries(REACTIONS).map(([type, data]) => (
+                                <button
+                                  key={type}
+                                  className="fb-reaction-option"
+                                  onClick={(e) => { e.stopPropagation(); handleReaction(event.id, type); }}
+                                  title={data.label}
+                                >
+                                  <span className="fb-reaction-emoji">{data.emoji}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        
                         <button 
                           className={`fb-action-btn${showComments === event.id ? ' active' : ''}`}
                           onClick={(e) => { e.stopPropagation(); handleCommentClick(event.id); }}

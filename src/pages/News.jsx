@@ -46,20 +46,39 @@ export default function News() {
   const [search,  setSearch]  = useState('')
   const [activeCat, setActiveCat] = useState('All')
   const [expanded, setExpanded] = useState(null)
-  const [liked, setLiked] = useState({})
-  const [likeCount, setLikeCount] = useState({})
+  const [reactions, setReactions] = useState({})
+  const [reactionCounts, setReactionCounts] = useState({})
+  const [showReactionPicker, setShowReactionPicker] = useState(null)
   const [showComments, setShowComments] = useState(null)
   const [comments, setComments] = useState({})
   const [commentText, setCommentText] = useState('')
   const [showShareModal, setShowShareModal] = useState(null)
 
-  // Initialize like counts from random seed
+  const REACTIONS = {
+    like: { emoji: '👍', label: 'Like', color: '#1877f2' },
+    love: { emoji: '❤️', label: 'Love', color: '#f33e58' },
+    care: { emoji: '🤗', label: 'Care', color: '#f7b125' },
+    haha: { emoji: '😂', label: 'Haha', color: '#f7b125' },
+    wow: { emoji: '😮', label: 'Wow', color: '#f7b125' },
+    sad: { emoji: '😢', label: 'Sad', color: '#f7b125' },
+    angry: { emoji: '😠', label: 'Angry', color: '#e9710f' },
+  }
+
+  // Initialize reaction counts from random seed
   useEffect(() => {
     const counts = {}
     news.forEach(item => {
-      counts[item.id] = Math.floor(Math.random() * 50) + 10
+      counts[item.id] = {
+        like: Math.floor(Math.random() * 30) + 5,
+        love: Math.floor(Math.random() * 20) + 2,
+        care: Math.floor(Math.random() * 10),
+        haha: Math.floor(Math.random() * 15),
+        wow: Math.floor(Math.random() * 10),
+        sad: Math.floor(Math.random() * 5),
+        angry: Math.floor(Math.random() * 3),
+      }
     })
-    setLikeCount(counts)
+    setReactionCounts(counts)
   }, [news])
 
   // Debug: Log news items with images
@@ -73,16 +92,53 @@ export default function News() {
     }
   }, [news])
 
-  const toggleLike = (id) => {
-    setLiked(prev => {
-      const newLiked = { ...prev, [id]: !prev[id] }
-      // Update count
-      setLikeCount(prevCount => ({
-        ...prevCount,
-        [id]: (prevCount[id] || 0) + (newLiked[id] ? 1 : -1)
-      }))
-      return newLiked
+  const handleReaction = (itemId, reactionType) => {
+    setReactions(prev => {
+      const oldReaction = prev[itemId]
+      const newReactions = { ...prev, [itemId]: reactionType }
+      
+      // Update counts
+      setReactionCounts(prevCounts => {
+        const counts = { ...prevCounts[itemId] }
+        if (oldReaction) counts[oldReaction] = Math.max(0, counts[oldReaction] - 1)
+        counts[reactionType] = (counts[reactionType] || 0) + 1
+        return { ...prevCounts, [itemId]: counts }
+      })
+      
+      setShowReactionPicker(null)
+      return newReactions
     })
+  }
+
+  const removeReaction = (itemId) => {
+    setReactions(prev => {
+      const oldReaction = prev[itemId]
+      if (oldReaction) {
+        setReactionCounts(prevCounts => {
+          const counts = { ...prevCounts[itemId] }
+          counts[oldReaction] = Math.max(0, counts[oldReaction] - 1)
+          return { ...prevCounts, [itemId]: counts }
+        })
+      }
+      const newReactions = { ...prev }
+      delete newReactions[itemId]
+      return newReactions
+    })
+    setShowReactionPicker(null)
+  }
+
+  const getTotalReactions = (itemId) => {
+    const counts = reactionCounts[itemId] || {}
+    return Object.values(counts).reduce((sum, count) => sum + count, 0)
+  }
+
+  const getTopReactions = (itemId) => {
+    const counts = reactionCounts[itemId] || {}
+    return Object.entries(counts)
+      .filter(([_, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([type, _]) => type)
   }
 
   const handleCommentClick = (id) => {
@@ -327,12 +383,21 @@ export default function News() {
 
                     {/* Reaction Bar */}
                     <div className="fb-reactions-bar">
-                      <div className="fb-reactions-summary">
-                        <div className="fb-reaction-icons">
-                          <span className="fb-reaction-icon" style={{ background: '#1877f2' }}>👍</span>
-                          <span className="fb-reaction-icon" style={{ background: '#f33e58' }}>❤️</span>
-                        </div>
-                        <span className="fb-reaction-count">{likeCount[item.id] || 0}</span>
+                      <div className="fb-reactions-summary" onClick={() => {}}>
+                        {getTopReactions(item.id).length > 0 ? (
+                          <>
+                            <div className="fb-reaction-icons">
+                              {getTopReactions(item.id).map(type => (
+                                <span key={type} className="fb-reaction-icon" style={{ background: REACTIONS[type].color }}>
+                                  {REACTIONS[type].emoji}
+                                </span>
+                              ))}
+                            </div>
+                            <span className="fb-reaction-count">{getTotalReactions(item.id)}</span>
+                          </>
+                        ) : (
+                          <span className="fb-reaction-count" style={{ color: '#65676b' }}>Be the first to react</span>
+                        )}
                       </div>
                       <div className="fb-engagement-summary">
                         <span onClick={() => handleCommentClick(item.id)} style={{ cursor: 'pointer' }}>
@@ -344,15 +409,48 @@ export default function News() {
 
                     {/* Card Footer */}
                     <div className="fb-card-footer">
-                      <button 
-                        className={`fb-action-btn${liked[item.id] ? ' active' : ''}`}
-                        onClick={() => toggleLike(item.id)}
-                      >
-                        <svg viewBox="0 0 24 24" fill={liked[item.id] ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-                        </svg>
-                        {liked[item.id] ? 'Liked' : 'Like'}
-                      </button>
+                      <div className="fb-reaction-btn-wrapper">
+                        <button 
+                          className={`fb-action-btn${reactions[item.id] ? ' active' : ''}`}
+                          onClick={() => reactions[item.id] ? removeReaction(item.id) : setShowReactionPicker(showReactionPicker === item.id ? null : item.id)}
+                          onMouseEnter={() => setShowReactionPicker(item.id)}
+                          style={reactions[item.id] ? { color: REACTIONS[reactions[item.id]].color } : {}}
+                        >
+                          {reactions[item.id] ? (
+                            <>
+                              <span style={{ fontSize: '1.2rem' }}>{REACTIONS[reactions[item.id]].emoji}</span>
+                              {REACTIONS[reactions[item.id]].label}
+                            </>
+                          ) : (
+                            <>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                              </svg>
+                              Like
+                            </>
+                          )}
+                        </button>
+                        
+                        {/* Reaction Picker */}
+                        {showReactionPicker === item.id && (
+                          <div 
+                            className="fb-reaction-picker"
+                            onMouseLeave={() => setShowReactionPicker(null)}
+                          >
+                            {Object.entries(REACTIONS).map(([type, data]) => (
+                              <button
+                                key={type}
+                                className="fb-reaction-option"
+                                onClick={() => handleReaction(item.id, type)}
+                                title={data.label}
+                              >
+                                <span className="fb-reaction-emoji">{data.emoji}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
                       <button 
                         className={`fb-action-btn${showComments === item.id ? ' active' : ''}`}
                         onClick={() => handleCommentClick(item.id)}
